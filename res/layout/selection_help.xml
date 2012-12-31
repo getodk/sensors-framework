@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+   	android:layout_height="wrap_content"
+    android:stretchColumns="1">
+    
+    <TableRow>
+	    <ImageView
+	        android:src="@drawable/ic_menu_mark"
+	        android:layout_width="wrap_content"
+	        android:layout_height="fill_parent"
+	        android:layout_marginRight="6dip" />
+	    <LinearLayout
+	        android:orientation="vertical"
+	        android:layout_width="0dip"
+	        android:layout_weight="1"
+	        android:layout_height="fill_parent">
+	        <TextView
+	        	android:textStyle="bold"
+	            android:layout_width="fill_parent"
+	            android:layout_height="0dip"
+	            android:layout_weight="1"
+	            android:singleLine="true"
+	            android:text="SENSOR READY"
+	        />
+	        <TextView
+	            android:layout_width="fill_parent"
+	            android:layout_height="0dip"
+	            android:layout_weight="1"
+	            android:singleLine="true"
+	            android:text="Single Click: RECORD FROM SENSOR"
+	        />
+	        <TextView
+	            android:layout_width="fill_parent"
+	            android:layout_height="0dip"
+	            android:layout_weight="1" 
+	            android:singleLine="true"
+	            android:text="Long Click: UPDATE METADATA"
+	        />
+		</LinearLayout>
+	</TableRow>
+
+    <TableRow>
+	    <ImageView
+	        android:src="@drawable/ic_menu_report_image"
+	        android:layout_width="wrap_content"
+	        android:layout_height="fill_parent"
+	        android:layout_marginRight="6dip" />
+	    <LinearLayout
+	        android:orientation="vertical"
+	        android:layout_width="0dip"
+	        android:layout_weight="1"
+	        android:layout_height="fill_parent">
+	        <TextView
+	        	android:textStyle="bold"
+	            android:layout_width="fill_parent"
+	            android:layout_height="0dip"
+	            android:layout_weight="1"
+	            android:singleLine="true"
+	            android:text="SENSOR OUT OF RANGE"
+	        />
+	        <TextView
+	            android:layout_width="fill_parent"
+	            android:layout_height="0dip"
+	            android:layout_weight="1"
+	            android:singleLine="true"
+	            android:text="Single Click: OPEN RECORD"
+	        />
+	        <TextView
+	            android:layout_width="fill_parent"
+	            android:layout_height="0dip"
+	            android:layout_weight="1" 
+	            android:singleLine="true"
+	            android:text="Long Click: UPDATE METADATA"
+	        />
+		</LinearLayout>
+	</TableRow>
+	
+    <TableRow>
+	    <ImageView
+	        android:src="@drawable/ic_menu_add"
+	        android:layout_width="wrap_content"
+	        android:layout_height="fill_parent"
+	        android:layout_marginRight="6dip" />
+	    <LinearLayout
+	        android:orientation="vertical"
+	        android:layout_width="0dip"
+	        android:layout_weight="1"
+	        android:layout_height="fill_parent">
+	        <TextView
+	        	android:textStyle="bold"
+	            android:layout_width="fill_parent"
+	            android:layout_height="0dip"
+	            android:layout_weight="1"
+	            android:singleLine="true"
+	            android:text="REGISTER SENSOR"
+	        />
+	        <TextView
+	            android:layout_width="fill_parent"
+	            android:layout_height="0dip"
+	            android:layout_weight="1"
+	            android:singleLine="true"
+	            android:text="Single Click: REGISTER"
+	        />
+	        <TextView
+	            android:layout_width="fill_parent"
+	            android:layout_height="0dip"
+	            android:layout_weight="1" 
+	            android:singleLine="true"
+	            android:text="Long Click: UPDATE METADATA"
+	        />
+		</LinearLayout>
+	</TableRow>
+    
+    <TableRow>
+	    <ImageView
+	        android:src="@drawable/ic_menu_manage"
+	        android:layout_width="wrap_content"
+	        android:layout_height="fill_parent"
+	        android:layout_marginRight="6dip" />
+	    <LinearLayout
+	        android:orientation="vertical"
+	        android:layout_width="0dip"
+	        android:layout_weight="1"
+	        android:layout_height="fill_parent">
+	        <TextView
+	        	android:textStyle="bold"
+	            android:layout_width="fill_parent"
+	            android:layout_height="0dip"
+	            android:layout_weight="1"
+	            android:singleLine="true"
+	            android:text="NEW DEVICE IN RANGE"
+	        />
+	        <TextView
+	            android:layout_width="fill_parent"
+	            android:layout_height="0dip"
+	            android:layout_weight="1"
+	            android:singleLine="true"
+	            android:text="Single Click: PAIR PHONE WITH DEVICE"
+	        />
+	        <TextView
+	            android:layout_width="fill_parent"
+	            android:layout_height="0dip"
+	            android:layout_weight="1" 
+	            android:singleLine="true"
+	            android:text="Long Click: No Action"
+	        />
+		</LinearLayout>
+	</TableRow>
+    
+    <TableRow>
+	    <ImageView
+	        android:src="@drawable/ic_menu_block"
+	        android:layout_width="wrap_content"
+	        android:layout_height="fill_parent"
+	        android:layout_marginRight="6dip" />
+	    <LinearLayout
+	        android:orientation="vertical"
+	        android:layout_width="0dip"
+	        android:layout_weight="1"
+	        android:layout_height="fill_parent">
+	        <TextView
+	        	android:textStyle="bold"
+	            android:layout_width="fill_parent"
+	            android:layout_height="0dip"
+	            android:layout_weight="1"
+	            android:singleLine="true"
+	            android:text="NOT A SENSOR"
+	        />
+	        <TextView
+	            android:layout_width="fill_parent"
+	            android:layout_height="0dip"
+	            android:layout_weight="1"
+	            android:singleLine="true"
+	            android:text="Single Click: No Action"
+	        />
+	        <TextView
+	            android:layout_width="fill_parent"
+	            android:layout_height="0dip"
+	            android:layout_weight="1" 
+	            android:singleLine="true"
+	            android:text="Long Click: UPDATE METADATA"
+	        />
+		</LinearLayout>
+	</TableRow>
+	
+</TableLayout>
