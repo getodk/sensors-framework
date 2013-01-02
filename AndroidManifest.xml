@@ -9,7 +9,7 @@
 	<application android:icon="@drawable/icon" android:label="@string/app_name">
 		<uses-library android:name="com.android.future.usb.accessory" />
 
-		<activity android:name=".activity.ActivityLauncher">
+		<activity android:name=".ui.activity.ActivityLauncher">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
 				<category android:name="android.intent.category.LAUNCHER" />
@@ -17,7 +17,7 @@
 		</activity>
 
 		<activity android:label="@string/StarterAppName"
-			android:name=".activity.SensorServiceStarter">
+			android:name=".ui.activity.SensorServiceStarter">
 			<intent-filter>
 				<action android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED" />
 			</intent-filter>
@@ -25,7 +25,7 @@
 				android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED" />
 		</activity>
 		
-		<activity android:name=".activity.AddSensorActivity" android:exported="true" android:enabled="true">
+		<activity android:name=".ui.activity.AddSensorActivity" android:exported="true" android:enabled="true">
 		<intent-filter>
 		 <action android:name="org.opendatakit.sensors.activity.AddSensorActivity" />
 		</intent-filter>
