@@ -11,6 +11,8 @@
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="true" exportOutputFolder="false">
+        <javaElement handleIdentifier="=opendatakit.sensors/gen&lt;org.opendatakit.sensors.service"/>
+        <javaElement handleIdentifier="=opendatakit.sensors/gen&lt;org.opendatakit.sensors.drivers"/>
         <javaElement handleIdentifier="=opendatakit.sensors/global"/>
     </selectedElements>
 </jardesc>
