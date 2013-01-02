@@ -180,8 +180,8 @@ public class BaseActivity extends Activity {
 
 	protected void launchSensorDiscovery() {
 		Intent i = new Intent();
-		i.setClassName("org.opendatakit.sensorsV2",
-				"org.opendatakit.sensorsV2.activity.AddSensorActivity");
+		i.setClassName("org.opendatakit.sensors",
+				"org.opendatakit.sensors.ui.activity.AddSensorActivity");
 		startActivityForResult(i, SENSOR_DISCOVERY_RETURN);
 	}
 
