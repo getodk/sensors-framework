@@ -15,12 +15,16 @@
  */
 package org.opendatakit.sensors.usb;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.opendatakit.sensors.CommunicationChannelType;
 import org.opendatakit.sensors.DriverType;
 import org.opendatakit.sensors.manager.AbstractChannelManagerBase;
+import org.opendatakit.sensors.manager.DetailedSensorState;
 import org.opendatakit.sensors.manager.DiscoverableDevice;
 import org.opendatakit.sensors.manager.SensorNotFoundException;
 
@@ -46,6 +50,7 @@ public class USBManager extends AbstractChannelManagerBase {
 	private USBCommSubChannel activeCommChannel;
 	private USBScanner deviceScanner;
 	private volatile boolean deviceAttached = false;
+	private volatile Set<String> connectedSensors;
 	
 	/*
 	 * Service lifecycle methods
@@ -63,7 +68,7 @@ public class USBManager extends AbstractChannelManagerBase {
         usbAuthPendingIntent = PendingIntent.getBroadcast(mContext,
 				0, new Intent(ACTION_USB_PERMISSION), 0);
         
-        deviceScanner = new USBScanner();
+        connectedSensors = Collections.synchronizedSet(new HashSet<String>());
         
 		if(DEBUG_VERBOSE) Log.d(TAG,"constructor exited!");
 	}
@@ -76,8 +81,12 @@ public class USBManager extends AbstractChannelManagerBase {
     	
     	mContext.unregisterReceiver(mUsbReceiver);
     	
-    	if(deviceScanner != null)
+    	if(deviceScanner != null) {
     		deviceScanner.shutdownThread();
+    		deviceScanner = null;
+    	}
+    	
+    	disconnectAllSensors();
 		
 		if(DEBUG_VERBOSE) Log.d(TAG,"shutdown exited!");
     }
@@ -88,6 +97,7 @@ public class USBManager extends AbstractChannelManagerBase {
 	
 	@Override
 	public void initializeSensors() {
+		deviceScanner = new USBScanner();
         deviceScanner.start();
         
         mContext.registerReceiver(mUsbReceiver, new IntentFilter(
@@ -99,8 +109,6 @@ public class USBManager extends AbstractChannelManagerBase {
 		mContext.registerReceiver(mUsbReceiver, new IntentFilter(
 				UsbManager.ACTION_USB_DEVICE_DETACHED));
 
-//		if(deviceAttached)
-//			activeCommChannel.initializeSensors();
 	}	
 
 	@Override
@@ -129,13 +137,17 @@ public class USBManager extends AbstractChannelManagerBase {
 	}
 	
 	public void sensorConnect(String id) throws SensorNotFoundException {		
-		if(deviceAttached)
-			activeCommChannel.sensorConnect(id);	
+		if(deviceAttached) {
+			activeCommChannel.sensorConnect(id);
+			connectedSensors.add(id);
+		}
 	}
 
 	public void sensorDisconnect(String id) throws SensorNotFoundException {
-		if(deviceAttached)
-			activeCommChannel.sensorDisconnect(id);	
+		if(deviceAttached) {
+			activeCommChannel.sensorDisconnect(id);
+			connectedSensors.remove(id);
+		}
 	}
 
 	public void sensorWrite(String id, byte[] message) {		
@@ -165,6 +177,16 @@ public class USBManager extends AbstractChannelManagerBase {
 			activeCommChannel.removeAllSensors();
 	}
 	
+	private void disconnectAllSensors() {
+		synchronized(connectedSensors) {
+			
+			for(String sensorId : connectedSensors) {
+				mSensorManager.updateSensorState(sensorId,DetailedSensorState.DISCONNECTED);
+			}
+			connectedSensors.clear();
+		}
+	}
+	
 	public final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
 
 		public void onReceive(Context context, Intent intent) {
@@ -188,11 +210,16 @@ public class USBManager extends AbstractChannelManagerBase {
 				deviceAttached = false;				
 			}
 			
-			synchronized(deviceScanner) {
-				if(deviceAttached == false) {
-					//usb connection dropped. notify scanner thread to start scanning port for devices to be connected.
-					activeCommChannel.shutdown();
-					deviceScanner.notifyAll();
+			if(deviceScanner != null) {
+				synchronized(deviceScanner) {
+					if(deviceAttached == false) {
+						//usb connection dropped. notify scanner thread to start scanning port for devices to be connected.
+						if(activeCommChannel != null)
+							activeCommChannel.shutdown();
+						
+						disconnectAllSensors();
+						deviceScanner.notifyAll();
+					}
 				}
 			}
 		}
@@ -201,6 +228,10 @@ public class USBManager extends AbstractChannelManagerBase {
 	private class USBScanner extends Thread {
 
 		private final AtomicBoolean isRunning = new AtomicBoolean(true);
+		
+		public USBScanner() {
+			super("USBScanner");
+		}
 		
 		public void shutdownThread() {
 			isRunning.set(false);

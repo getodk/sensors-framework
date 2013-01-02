@@ -159,11 +159,6 @@ public class FTDISubChannel implements USBCommSubChannel {
 					deviceList.add(newDiscoverableDevice);
 					mDiscoverableDeviceList.add(newDiscoverableDevice);
 
-					// mSensorManager.updateSensorState(sensorID,
-					// DetailedSensorState.CONNECTED);
-					// Log.d(TAG, "sensorID " + sensorID +
-					// " set to connected in DB");
-
 				} else {
 					Log.d(TAG, "USB DEVICE: " + device.getDeviceName());
 					Log.d(TAG, "Vendor: " + device.getVendorId());
@@ -321,8 +316,8 @@ public class FTDISubChannel implements USBCommSubChannel {
 	}
 
 	public void sensorDisconnect(String id) throws SensorNotFoundException {
-		ftdiConnection.releaseInterface(ftdiInterface);
-		usbDeviceClaimed = false;
+		closeFtdiConnection();
+		
 		ODKSensor sensor = mSensorManager.getSensor(id);
 		if (sensor != null) {
 			mSensorManager.updateSensorState(id,
@@ -352,9 +347,11 @@ public class FTDISubChannel implements USBCommSubChannel {
 		if (sensor != null) {
 			sensor.dataBufferReset();
 		}
-
-		processor = new DataProcessor(this);
-		processor.start();
+		
+		if(processor == null || processor.getState() == Thread.State.TERMINATED) {
+			processor = new DataProcessor(this);
+			processor.start();
+		}
 	}
 
 	public void stopSensorDataAcquisition(String id, byte[] command) {
@@ -369,10 +366,17 @@ public class FTDISubChannel implements USBCommSubChannel {
 			processor.shutdownThread();
 			processor = null;
 		}
+		
+		closeFtdiConnection();
+	}
+
+	private void closeFtdiConnection() {
 		if (ftdiConnection != null) {
-			if (ftdiInterface != null && !usbDeviceClaimed) {
+			if (ftdiInterface != null && usbDeviceClaimed) {
 				ftdiConnection.releaseInterface(ftdiInterface);
+				usbDeviceClaimed = false;
 			}
+			
 			ftdiConnection.close();
 		}
 	}
@@ -428,6 +432,7 @@ public class FTDISubChannel implements USBCommSubChannel {
 		private final AtomicBoolean killThread = new AtomicBoolean(false);
 
 		DataProcessor(FTDISubChannel channel) {
+			super("FTDIChannel DataProcessor");
 			this.channel = channel;
 		}
 
