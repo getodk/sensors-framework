@@ -94,7 +94,7 @@ public class WorkerThread extends Thread {
 					String sensorID = aSensor.getSensorID();
 					String msgType = aBundle.getString(DataSeries.MSG_TYPE);
 					String sensorType = aBundle.getString(DataSeries.SENSOR_TYPE);
-					long ts = aBundle.getLong(DataSeries.TIMESTAMP);					
+					long ts = aBundle.getLong(DataSeries.SERIES_TIMESTAMP);					
 					int numSamples = aBundle.getInt(DataSeries.NUM_SAMPLES); 										
 					String tempReport = aBundle.getString(DataSeries.DATA_AS_CSV);		
 
