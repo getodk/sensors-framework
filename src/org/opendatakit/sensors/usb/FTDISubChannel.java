@@ -48,9 +48,11 @@ import android.util.Log;
  * 
  */
 public class FTDISubChannel implements USBCommSubChannel {
-
+	
 	private static final String TAG = "FTDIChannel";
 
+	private static final String FIXED_ID = "FTDI";
+	
 	private static final int MAX_BUFFER_SIZE = 64;
 
 	private static final int FTDI_VENDOR = 1027;
@@ -151,9 +153,9 @@ public class FTDISubChannel implements USBCommSubChannel {
 						&& device.getProductId() == FTDI_PRODUCT) {
 
 					Log.e(TAG, "FOUND FTDI Device");
-					String sensorID = String.valueOf(device.getDeviceId());
+					//String sensorID = String.valueOf(device.getDeviceId());
 					USBDiscoverableDevice newDiscoverableDevice = new USBDiscoverableDevice(
-							sensorID, this.mSensorManager);
+							FIXED_ID, this.mSensorManager);
 					newDiscoverableDevice.connectionLost = false;
 
 					deviceList.add(newDiscoverableDevice);
@@ -247,8 +249,8 @@ public class FTDISubChannel implements USBCommSubChannel {
 			getDiscoverableSensor();
 		}
 
-		if (ftdiDevice != null
-				&& id.equals(String.valueOf(ftdiDevice.getDeviceId()))) {
+		if (ftdiDevice != null) {
+				// && id.equals(String.valueOf(ftdiDevice.getDeviceId()))) {
 
 			Log.e(TAG, "Number of interfaces:" + ftdiDevice.getInterfaceCount());
 			ftdiInterface = ftdiDevice.getInterface(0);
@@ -419,8 +421,7 @@ public class FTDISubChannel implements USBCommSubChannel {
 			SensorDataPacket sdp = new SensorDataPacket(sensorData,
 					System.currentTimeMillis());
 
-			mSensorManager.addSensorDataPacket(
-					String.valueOf(ftdiDevice.getDeviceId()), sdp);
+			mSensorManager.addSensorDataPacket(FIXED_ID, sdp);
 
 			// Log.e(TAG, output.toString());
 		}
