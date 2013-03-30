@@ -6,12 +6,12 @@
     android:layout_height="wrap_content">
         <TextView
             android:id="@+id/meta_name_title"
-    		android:layout_width="fill_parent" 
-   			android:layout_height="wrap_content" 
-            android:text="Select Sensor Type"
+    		android:layout_width="fill_parent"
+   			android:layout_height="wrap_content"
+            android:text="@+string/select_sensor_type"
         	android:textStyle="bold"
         />
-	 <Spinner 
+	 <Spinner
         android:id="@+id/sensor_type_spinner"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"

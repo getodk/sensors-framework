@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	android:versionCode="1" android:versionName="1.0" package="org.opendatakit.sensors">
+	android:versionCode="1" android:versionName="2.0 alpha" package="org.opendatakit.sensors">
 	<uses-sdk android:minSdkVersion="12" />
 
 	<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
@@ -24,16 +24,17 @@
 			<meta-data android:resource="@xml/accessory_filter"
 				android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED" />
 		</activity>
-		
-		<activity android:name=".ui.activity.AddSensorActivity" android:exported="true" android:enabled="true">
+
+		<activity android:name=".ui.activity.AddSensorActivity"
+		    android:exported="true" android:enabled="true">
 		<intent-filter>
 		 <action android:name="org.opendatakit.sensors.activity.AddSensorActivity" />
 		</intent-filter>
 		</activity>
 		<activity android:name=".bluetooth.ui.SensorBtSelectionHelpActivity"></activity>
 		<activity android:name=".bluetooth.ui.SensorBtSelectionActivity"></activity>
-		<activity android:name=".usb.ui.USBSensorSelectionActivity"></activity>
 		<activity android:name=".usb.ui.SensorUsbSelectionActivity"></activity>
+		<activity android:name=".usb.ui.SensorUsbSelectionHelpActivity"></activity>
 		<provider android:authorities="org.opendatakit.sensors.usbsensordataprovider"
 			android:name=".contentprovider.SensorContentProvider">
 		</provider>

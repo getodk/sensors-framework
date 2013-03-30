@@ -5,18 +5,14 @@
     android:layout_height="fill_parent"
     >
 <Button
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="Add USB Device"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:text="@+string/add_usb_device"
     android:onClick="addUSBAction" />
-    
-    />
-<Button 
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="Add Bluetooth Device"
+<Button
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:text="@+string/add_bluetooth_device"
     android:onClick="addBluetoothAction" />
-    
-    /> 
 </LinearLayout>
 

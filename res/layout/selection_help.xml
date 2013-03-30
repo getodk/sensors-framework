@@ -3,7 +3,7 @@
     android:layout_width="wrap_content"
    	android:layout_height="wrap_content"
     android:stretchColumns="1">
-    
+
     <TableRow>
 	    <ImageView
 	        android:src="@drawable/ic_menu_mark"
@@ -21,21 +21,21 @@
 	            android:layout_height="0dip"
 	            android:layout_weight="1"
 	            android:singleLine="true"
-	            android:text="SENSOR READY"
+	            android:text="@+string/sensor_ready"
 	        />
 	        <TextView
 	            android:layout_width="fill_parent"
 	            android:layout_height="0dip"
 	            android:layout_weight="1"
 	            android:singleLine="true"
-	            android:text="Single Click: RECORD FROM SENSOR"
+	            android:text="@+string/record_from_sensor"
 	        />
 	        <TextView
 	            android:layout_width="fill_parent"
 	            android:layout_height="0dip"
-	            android:layout_weight="1" 
+	            android:layout_weight="1"
 	            android:singleLine="true"
-	            android:text="Long Click: UPDATE METADATA"
+	            android:text="@+string/update_metadata"
 	        />
 		</LinearLayout>
 	</TableRow>
@@ -57,25 +57,25 @@
 	            android:layout_height="0dip"
 	            android:layout_weight="1"
 	            android:singleLine="true"
-	            android:text="SENSOR OUT OF RANGE"
+	            android:text="@+string/sensor_out_of_range"
 	        />
 	        <TextView
 	            android:layout_width="fill_parent"
 	            android:layout_height="0dip"
 	            android:layout_weight="1"
 	            android:singleLine="true"
-	            android:text="Single Click: OPEN RECORD"
+	            android:text="@+string/open_record"
 	        />
 	        <TextView
 	            android:layout_width="fill_parent"
 	            android:layout_height="0dip"
-	            android:layout_weight="1" 
+	            android:layout_weight="1"
 	            android:singleLine="true"
-	            android:text="Long Click: UPDATE METADATA"
+	            android:text="@+string/update_metadata"
 	        />
 		</LinearLayout>
 	</TableRow>
-	
+
     <TableRow>
 	    <ImageView
 	        android:src="@drawable/ic_menu_add"
@@ -93,25 +93,25 @@
 	            android:layout_height="0dip"
 	            android:layout_weight="1"
 	            android:singleLine="true"
-	            android:text="REGISTER SENSOR"
+	            android:text="@+string/register_sensor"
 	        />
 	        <TextView
 	            android:layout_width="fill_parent"
 	            android:layout_height="0dip"
 	            android:layout_weight="1"
 	            android:singleLine="true"
-	            android:text="Single Click: REGISTER"
+	            android:text="@+string/register"
 	        />
 	        <TextView
 	            android:layout_width="fill_parent"
 	            android:layout_height="0dip"
-	            android:layout_weight="1" 
+	            android:layout_weight="1"
 	            android:singleLine="true"
-	            android:text="Long Click: UPDATE METADATA"
+	            android:text="@+string/update_metadata"
 	        />
 		</LinearLayout>
 	</TableRow>
-    
+
     <TableRow>
 	    <ImageView
 	        android:src="@drawable/ic_menu_manage"
@@ -129,25 +129,25 @@
 	            android:layout_height="0dip"
 	            android:layout_weight="1"
 	            android:singleLine="true"
-	            android:text="NEW DEVICE IN RANGE"
+	            android:text="@+string/new_device_in_range"
 	        />
 	        <TextView
 	            android:layout_width="fill_parent"
 	            android:layout_height="0dip"
 	            android:layout_weight="1"
 	            android:singleLine="true"
-	            android:text="Single Click: PAIR PHONE WITH DEVICE"
+	            android:text="@+string/pair_device_with_phone"
 	        />
 	        <TextView
 	            android:layout_width="fill_parent"
 	            android:layout_height="0dip"
-	            android:layout_weight="1" 
+	            android:layout_weight="1"
 	            android:singleLine="true"
-	            android:text="Long Click: No Action"
+	            android:text="@+string/long_click_no_action"
 	        />
 		</LinearLayout>
 	</TableRow>
-    
+
     <TableRow>
 	    <ImageView
 	        android:src="@drawable/ic_menu_block"
@@ -165,23 +165,23 @@
 	            android:layout_height="0dip"
 	            android:layout_weight="1"
 	            android:singleLine="true"
-	            android:text="NOT A SENSOR"
+	            android:text="@+string/not_a_sensor"
 	        />
 	        <TextView
 	            android:layout_width="fill_parent"
 	            android:layout_height="0dip"
 	            android:layout_weight="1"
 	            android:singleLine="true"
-	            android:text="Single Click: No Action"
+	            android:text="@+string/single_click_no_action"
 	        />
 	        <TextView
 	            android:layout_width="fill_parent"
 	            android:layout_height="0dip"
-	            android:layout_weight="1" 
+	            android:layout_weight="1"
 	            android:singleLine="true"
-	            android:text="Long Click: UPDATE METADATA"
+	            android:text="@+string/update_metadata"
 	        />
 		</LinearLayout>
 	</TableRow>
-	
+
 </TableLayout>

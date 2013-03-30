@@ -17,6 +17,7 @@ package org.opendatakit.sensors.service;
 
 import java.util.List;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
@@ -26,11 +27,13 @@ import android.os.RemoteException;
 import android.util.Log;
 
 /**
- * 
+ * This may be extended by various sensor implementations.
+ *
  * @author wbrunette@gmail.com
  * @author rohitchaudhri@gmail.com
- * 
+ *
  */
+@SuppressLint("Registered")
 public class BaseActivity extends Activity {
 	private static final int MAX_RETRY = 3;
 
@@ -88,7 +91,7 @@ public class BaseActivity extends Activity {
 			} else {
 				mwProxy = null; // cause connection to be restablished
 			}
-			
+
 		}
 		return false;
 	}
@@ -124,7 +127,7 @@ public class BaseActivity extends Activity {
 		}
 		throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
 	}
-	
+
 	protected List<Bundle> getSensorData(String id, long maxNumReadings)
 			throws RemoteException {
 		if (verifyConnection()) {
@@ -132,7 +135,7 @@ public class BaseActivity extends Activity {
 		}
 		throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
 	}
-	
+
 	protected void sendDataToSensor(String id, Bundle dataToSend) throws RemoteException {
 		if (verifyConnection()) {
 			mwProxy.sendDataToSensor(id, dataToSend);
@@ -190,13 +193,13 @@ public class BaseActivity extends Activity {
 		params.putInt("SR", sendRate);
 		configure(id, "SR", params);
 	}
-	
+
 	protected void configureUsbBridgeReadRate(String id, int readRate) throws RemoteException {
 		Bundle params = new Bundle();
-		params.putInt("RR", readRate);	
+		params.putInt("RR", readRate);
 		configure(id, "RR", params);
 	}
-	
+
 	protected String getAllRecords() {
 		String toReturn = null;
 		Cursor cur = managedQuery(contentProviderUri, columns, null, null, null);

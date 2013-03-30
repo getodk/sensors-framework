@@ -59,10 +59,10 @@ import android.widget.ToggleButton;
 import android.widget.AdapterView.OnItemClickListener;
 
 /**
- * 
+ *
  * @author wbrunette@gmail.com
  * @author rohitchaudhri@gmail.com
- * 
+ *
  */
 public class SensorBtSelectionActivity extends Activity {
 
@@ -130,7 +130,7 @@ public class SensorBtSelectionActivity extends Activity {
 
 	/**
 	 * Save UI State
-	 * 
+	 *
 	 * @param outState
 	 *            bundle to save state into
 	 */
@@ -147,7 +147,7 @@ public class SensorBtSelectionActivity extends Activity {
 
 	/**
 	 * Restore UI State
-	 * 
+	 *
 	 * @param savedInstanceState
 	 *            bundle to restore state from
 	 */
@@ -193,7 +193,7 @@ public class SensorBtSelectionActivity extends Activity {
 		getApplicationContext().unregisterReceiver(mScanFinished);
 		super.onDestroy();
 	}
-	
+
 	/**
 	 * Help button listener
 	 */
@@ -297,7 +297,7 @@ public class SensorBtSelectionActivity extends Activity {
 
 	/**
 	 * Show sensor registration progress dialog
-	 * 
+	 *
 	 * @param id
 	 *            sensor id
 	 * @param name
@@ -398,7 +398,7 @@ public class SensorBtSelectionActivity extends Activity {
 
 	/**
 	 * Displays The MetaDataEditor Dialog
-	 * 
+	 *
 	 * @param position
 	 *            Position Of The Item That Was Clicked
 	 */
@@ -475,7 +475,7 @@ public class SensorBtSelectionActivity extends Activity {
 
 	/**
 	 * Confirmation Dialog To Enable Bluetooth
-	 * 
+	 *
 	 * @param prompt
 	 *            true to display dialog prompt to enable
 	 */
@@ -495,7 +495,7 @@ public class SensorBtSelectionActivity extends Activity {
 
 	/**
 	 * Toggle bluetooth scanning
-	 * 
+	 *
 	 * @param on
 	 *            true to enable scanning, false to disable
 	 */

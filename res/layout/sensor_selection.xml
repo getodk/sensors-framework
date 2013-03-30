@@ -17,16 +17,16 @@
 	<LinearLayout android:id="@+id/linearLayout1"
 		android:layout_height="wrap_content" android:layout_alignParentBottom="true"
 		android:layout_width="fill_parent">
-		<ToggleButton android:id="@+id/search_button" 
-			android:layout_width="fill_parent" 
+		<ToggleButton android:id="@+id/search_button"
+			android:layout_width="fill_parent"
 			android:layout_weight="1"
-			android:textOn="Stop Scanning" 
-			android:textOff="Device Scan" 
+			android:textOn="Stop Scanning"
+			android:textOff="Device Scan"
 			android:layout_height="match_parent"></ToggleButton>
-		<Button android:id="@+id/help_button"	
+		<Button android:id="@+id/help_button"
 			android:layout_width="fill_parent"
 			android:layout_height="wrap_content"
-			android:layout_weight="1" 
-			android:text="Help"></Button>
+			android:layout_weight="1"
+			android:text="@+string/help"></Button>
 	</LinearLayout>
 </RelativeLayout>
