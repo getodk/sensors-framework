@@ -10,6 +10,7 @@
    			android:layout_height="wrap_content"
             android:text="@+string/select_sensor_type"
         	android:textStyle="bold"
+        	android:textSize="21sp"
         />
 	 <Spinner
         android:id="@+id/sensor_type_spinner"

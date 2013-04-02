@@ -10,6 +10,7 @@
         android:layout_width="fill_parent"
         android:gravity="center_vertical"
         android:textColor="#86C1EC"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:textSize="21sp" />
 
 </LinearLayout>

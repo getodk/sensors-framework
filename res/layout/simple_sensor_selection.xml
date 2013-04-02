@@ -9,8 +9,9 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dip"
         android:text="@string/usbSensorSelection"
+        android:textSize="21sp"
     />
-    <Spinner 
+    <Spinner
         android:id="@+id/usb_spinner"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
