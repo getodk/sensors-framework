@@ -115,8 +115,12 @@ public class ODKExternalSensor implements ODKSensor {
 	@Override
 	public List<Bundle> getSensorData(long maxNumReadings) {
 		ArrayList<SensorDataPacket> rawData = new ArrayList<SensorDataPacket>();
-		rawData.addAll(buffer);
-		buffer.clear();
+		
+		synchronized (buffer) {
+			rawData.addAll(buffer);
+			buffer.clear();
+		}
+		
 		SensorDataParseResponse response = sensorDriverCom.getSensorData(maxNumReadings, rawData, remainingBytes);
 		remainingBytes = response.getRemainingData();
 		return response.getSensorData();
@@ -179,7 +183,9 @@ public class ODKExternalSensor implements ODKSensor {
 	 */
 	@Override
 	public void addSensorDataPacket(SensorDataPacket packet) {
-		buffer.add(packet);
+		synchronized (buffer) {
+			buffer.add(packet);
+		}
 	}
 
 	/* (non-Javadoc)
