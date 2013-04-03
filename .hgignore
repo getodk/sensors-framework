@@ -3,3 +3,5 @@ syntax: regexp
 ^gen$
 syntax: regexp
 ^bin$
+syntax: regexp
+^ODKSensors\.jar$
