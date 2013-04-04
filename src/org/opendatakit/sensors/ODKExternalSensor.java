@@ -34,7 +34,7 @@ import android.util.Log;
  */
 public class ODKExternalSensor implements ODKSensor {
 	// logging
-	private static final String LOGTAG = "SensorImpl";
+	private static final String LOGTAG = "ODKExternalSensor";
 
 	private String sensorId;
 	private boolean usingContentProvider;
