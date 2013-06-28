@@ -15,7 +15,7 @@
  */
 package org.opendatakit.sensors.drivers;
 
-import android.annotation.SuppressLint;
+//import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
@@ -27,7 +27,7 @@ import android.os.IBinder;
  * @author rohitchaudhri@gmail.com
  *
  */
-@SuppressLint("Registered")
+//@SuppressLint("Registered")
 public class SensorDriverService extends Service {
 
 	private IBinder mSensorServiceBinder;

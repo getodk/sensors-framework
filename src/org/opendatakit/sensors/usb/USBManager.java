@@ -19,7 +19,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.opendatakit.sensors.CommunicationChannelType;
 import org.opendatakit.sensors.DriverType;
@@ -29,13 +28,10 @@ import org.opendatakit.sensors.manager.DiscoverableDevice;
 import org.opendatakit.sensors.manager.SensorNotFoundException;
 
 import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.hardware.usb.UsbManager;
 import android.util.Log;
-import android.widget.Toast;
+//import android.hardware.usb.UsbManager;
 
 
 //svn version 1145: switching to the Android 3.1+ (API level 12) way of interacting with the USB subsystem.   
@@ -48,7 +44,7 @@ public class USBManager extends AbstractChannelManagerBase {
 		
     private PendingIntent usbAuthPendingIntent;
 	private USBCommSubChannel activeCommChannel;
-	private USBScanner deviceScanner;
+//	private USBScanner deviceScanner;
 	private volatile boolean deviceAttached = false;
 	private volatile Set<String> connectedSensors;
 	
@@ -79,12 +75,12 @@ public class USBManager extends AbstractChannelManagerBase {
     	if(deviceAttached)
     		activeCommChannel.shutdown();
     	
-    	mContext.unregisterReceiver(mUsbReceiver);
-    	
-    	if(deviceScanner != null) {
-    		deviceScanner.shutdownThread();
-    		deviceScanner = null;
-    	}
+//    	mContext.unregisterReceiver(mUsbReceiver);
+//    	
+//    	if(deviceScanner != null) {
+//    		deviceScanner.shutdownThread();
+//    		deviceScanner = null;
+//    	}
     	
     	disconnectAllSensors();
 		
@@ -97,17 +93,17 @@ public class USBManager extends AbstractChannelManagerBase {
 	
 	@Override
 	public void initializeSensors() {
-		deviceScanner = new USBScanner();
-        deviceScanner.start();
-        
-        mContext.registerReceiver(mUsbReceiver, new IntentFilter(
-				UsbManager.ACTION_USB_ACCESSORY_ATTACHED));
-		mContext.registerReceiver(mUsbReceiver, new IntentFilter(
-				UsbManager.ACTION_USB_ACCESSORY_DETACHED));
-		mContext.registerReceiver(mUsbReceiver, new IntentFilter(
-				UsbManager.ACTION_USB_DEVICE_ATTACHED));
-		mContext.registerReceiver(mUsbReceiver, new IntentFilter(
-				UsbManager.ACTION_USB_DEVICE_DETACHED));
+//		deviceScanner = new USBScanner();
+//        deviceScanner.start();
+//        
+//        mContext.registerReceiver(mUsbReceiver, new IntentFilter(
+//				UsbManager.ACTION_USB_ACCESSORY_ATTACHED));
+//		mContext.registerReceiver(mUsbReceiver, new IntentFilter(
+//				UsbManager.ACTION_USB_ACCESSORY_DETACHED));
+//		mContext.registerReceiver(mUsbReceiver, new IntentFilter(
+//				UsbManager.ACTION_USB_DEVICE_ATTACHED));
+//		mContext.registerReceiver(mUsbReceiver, new IntentFilter(
+//				UsbManager.ACTION_USB_DEVICE_DETACHED));
 
 	}	
 
@@ -187,100 +183,100 @@ public class USBManager extends AbstractChannelManagerBase {
 		}
 	}
 	
-	public final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
-
-		public void onReceive(Context context, Intent intent) {
-			Toast.makeText(context, "received USB event",
-					Toast.LENGTH_SHORT).show();
-
-			Log.d(TAG, "Received USB event");
-			String action = intent.getAction();
-			if (UsbManager.ACTION_USB_ACCESSORY_DETACHED.equals(action)) {
-				Log.d(TAG, "Received USB Accessory Detached");				
-				deviceAttached = false;												
-			}
-			if (UsbManager.ACTION_USB_ACCESSORY_ATTACHED.equals(action)) {
-				Log.d(TAG, "Received USB Accessory Attached");
-			}
-			if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
-				Log.d(TAG, "Received USB Device Attached");
-			}
-			if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
-				Log.d(TAG, "Received USB Device Detached");
-				deviceAttached = false;				
-			}
-			
-			if(deviceScanner != null) {
-				synchronized(deviceScanner) {
-					if(deviceAttached == false) {
-						//usb connection dropped. notify scanner thread to start scanning port for devices to be connected.
-						if(activeCommChannel != null)
-							activeCommChannel.shutdown();
-						
-						disconnectAllSensors();
-						deviceScanner.notifyAll();
-					}
-				}
-			}
-		}
-	};
-	
-	private class USBScanner extends Thread {
-
-		private final AtomicBoolean isRunning = new AtomicBoolean(true);
-		
-		public USBScanner() {
-			super("USBScanner");
-		}
-		
-		public void shutdownThread() {
-			isRunning.set(false);
-			interrupt();
-		}
-
-		@Override
-		public void run() {
-			while (isRunning.get()) {
-				if(ArduinoSubChannel.scanForDevice(mContext)) {
-
-					Log.d(TAG,"Found Arduino ADK device");				
-					ArduinoSubChannel.authorize(mContext, usbAuthPendingIntent);
-					activeCommChannel = new ArduinoSubChannel(mContext,mSensorManager);
-					if(((ArduinoSubChannel)activeCommChannel).channelInited()) {
-						deviceAttached = true;
-						Log.d(TAG,"ArduinoChannel: deviceAttached set to true");
-
-					}
-				}
-				else if(FTDISubChannel.scanForDevice(mContext)) {
-
-					Log.d(TAG,"Found FTDI device");					
-
-					FTDISubChannel.authorize(mContext, usbAuthPendingIntent);
-					activeCommChannel = new FTDISubChannel(mContext,mSensorManager);
-					deviceAttached = true;
-					Log.d(TAG,"FTDIChannel: deviceAttached set to true");
-				}
-				//else if some other usb channel.
-
-				if(deviceAttached == true) {
-					//established a usb connection. stop scanning.
-					synchronized (this) {
-						try {
-							this.wait();
-						}
-						catch(InterruptedException iex) {
-							iex.printStackTrace();
-						}							
-					}
-				}
-
-				try {
-					Thread.sleep(1000);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}			
-		}
-	}
+//	public final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
+//
+//		public void onReceive(Context context, Intent intent) {
+//			Toast.makeText(context, "received USB event",
+//					Toast.LENGTH_SHORT).show();
+//
+//			Log.d(TAG, "Received USB event");
+//			String action = intent.getAction();
+//			if (UsbManager.ACTION_USB_ACCESSORY_DETACHED.equals(action)) {
+//				Log.d(TAG, "Received USB Accessory Detached");				
+//				deviceAttached = false;												
+//			}
+//			if (UsbManager.ACTION_USB_ACCESSORY_ATTACHED.equals(action)) {
+//				Log.d(TAG, "Received USB Accessory Attached");
+//			}
+//			if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
+//				Log.d(TAG, "Received USB Device Attached");
+//			}
+//			if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
+//				Log.d(TAG, "Received USB Device Detached");
+//				deviceAttached = false;				
+//			}
+//			
+//			if(deviceScanner != null) {
+//				synchronized(deviceScanner) {
+//					if(deviceAttached == false) {
+//						//usb connection dropped. notify scanner thread to start scanning port for devices to be connected.
+//						if(activeCommChannel != null)
+//							activeCommChannel.shutdown();
+//						
+//						disconnectAllSensors();
+//						deviceScanner.notifyAll();
+//					}
+//				}
+//			}
+//		}
+//	};
+//	
+//	private class USBScanner extends Thread {
+//
+//		private final AtomicBoolean isRunning = new AtomicBoolean(true);
+//		
+//		public USBScanner() {
+//			super("USBScanner");
+//		}
+//		
+//		public void shutdownThread() {
+//			isRunning.set(false);
+//			interrupt();
+//		}
+//
+//		@Override
+//		public void run() {
+//			while (isRunning.get()) {
+//				if(ArduinoSubChannel.scanForDevice(mContext)) {
+//
+//					Log.d(TAG,"Found Arduino ADK device");				
+//					ArduinoSubChannel.authorize(mContext, usbAuthPendingIntent);
+//					activeCommChannel = new ArduinoSubChannel(mContext,mSensorManager);
+//					if(((ArduinoSubChannel)activeCommChannel).channelInited()) {
+//						deviceAttached = true;
+//						Log.d(TAG,"ArduinoChannel: deviceAttached set to true");
+//
+//					}
+//				}
+//				else if(FTDISubChannel.scanForDevice(mContext)) {
+//
+//					Log.d(TAG,"Found FTDI device");					
+//
+//					FTDISubChannel.authorize(mContext, usbAuthPendingIntent);
+//					activeCommChannel = new FTDISubChannel(mContext,mSensorManager);
+//					deviceAttached = true;
+//					Log.d(TAG,"FTDIChannel: deviceAttached set to true");
+//				}
+//				//else if some other usb channel.
+//
+//				if(deviceAttached == true) {
+//					//established a usb connection. stop scanning.
+//					synchronized (this) {
+//						try {
+//							this.wait();
+//						}
+//						catch(InterruptedException iex) {
+//							iex.printStackTrace();
+//						}							
+//					}
+//				}
+//
+//				try {
+//					Thread.sleep(1000);
+//				} catch (Exception e) {
+//					e.printStackTrace();
+//				}
+//			}			
+//		}
+//	}
 }

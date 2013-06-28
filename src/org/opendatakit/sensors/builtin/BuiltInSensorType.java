@@ -17,16 +17,12 @@ package org.opendatakit.sensors.builtin;
 
 import org.opendatakit.sensors.builtin.drivers.AbstractBuiltinDriver;
 import org.opendatakit.sensors.builtin.drivers.AccelerometerDriver;
-import org.opendatakit.sensors.builtin.drivers.GravityDriver;
 import org.opendatakit.sensors.builtin.drivers.GyroscopeDriver;
 import org.opendatakit.sensors.builtin.drivers.LightDriver;
-import org.opendatakit.sensors.builtin.drivers.LinearAccelerationDriver;
 import org.opendatakit.sensors.builtin.drivers.MagneticFieldDriver;
 import org.opendatakit.sensors.builtin.drivers.OrientationDriver;
 import org.opendatakit.sensors.builtin.drivers.PressureDriver;
 import org.opendatakit.sensors.builtin.drivers.ProximityDriver;
-import org.opendatakit.sensors.builtin.drivers.RotationVectorDriver;
-import org.opendatakit.sensors.builtin.drivers.TemperatureDriver;
 
 import android.hardware.Sensor;
 
@@ -38,16 +34,16 @@ import android.hardware.Sensor;
  */
 public enum BuiltInSensorType {
 	ACCELEROMETER(Sensor.TYPE_ACCELEROMETER, AccelerometerDriver.class),
-	GRAVITY(Sensor.TYPE_GRAVITY, GravityDriver.class),
+//	GRAVITY(Sensor.TYPE_GRAVITY, GravityDriver.class),
 	GYROSCOPE(Sensor.TYPE_GYROSCOPE, GyroscopeDriver.class),
 	LIGHT(Sensor.TYPE_LIGHT, LightDriver.class),
-	LINEAR_ACCELERATION(Sensor.TYPE_LINEAR_ACCELERATION, LinearAccelerationDriver.class),
+//	LINEAR_ACCELERATION(Sensor.TYPE_LINEAR_ACCELERATION, LinearAccelerationDriver.class),
 	MAGNETIC_FIELD(Sensor.TYPE_MAGNETIC_FIELD, MagneticFieldDriver.class),
 	ORIENTATION(Sensor.TYPE_ORIENTATION, OrientationDriver.class),
 	PRESSURE(Sensor.TYPE_PRESSURE, PressureDriver.class),
-	PROXIMITY(Sensor.TYPE_PROXIMITY, ProximityDriver.class),
-	ROTATION_VECTOR(Sensor.TYPE_ROTATION_VECTOR, RotationVectorDriver.class),
-	TEMPERATURE(Sensor.TYPE_AMBIENT_TEMPERATURE, TemperatureDriver.class);
+	PROXIMITY(Sensor.TYPE_PROXIMITY, ProximityDriver.class);
+//	ROTATION_VECTOR(Sensor.TYPE_ROTATION_VECTOR, RotationVectorDriver.class);
+//	TEMPERATURE(Sensor.TYPE_AMBIENT_TEMPERATURE, TemperatureDriver.class);
 	
 	private final int type;
 	private final Class<? extends AbstractBuiltinDriver> driverClass;

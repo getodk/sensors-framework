@@ -22,7 +22,6 @@ import java.util.Calendar;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.opendatakit.sensors.usb.ArduinoSubChannel;
 import org.opendatakit.sensors.usb.USBPayload;
 
 import android.os.ParcelFileDescriptor;
@@ -51,7 +50,7 @@ public class A3PSession {
 	private A3PInputWorker inputWorker;
 	private A3POutputWorker outputWorker;
 	private A3PConnectionState myState;
-	private ArduinoSubChannel arduinoChannel;
+//	private ArduinoSubChannel arduinoChannel;
 	
 //	private static final int CONFIG_DEVICE_ID = 0;
 	private static final int TURNOVER_EDGE_PERCENTAGE = 25;
@@ -76,13 +75,15 @@ public class A3PSession {
 	private ConcurrentHashMap<Integer, Integer> receivedMap; // this could be a set now, but a map preserves information for later
 	private ConcurrentHashMap<Integer, Integer> missingMap;		// this could potentially be changed to a set
 	
-	public A3PSession(ArduinoSubChannel myChannel, ParcelFileDescriptor parcelFileDescriptor){//InputStream inputStream, OutputStream outputStream){
-		
+//	public A3PSession(ArduinoSubChannel myChannel, ParcelFileDescriptor parcelFileDescriptor)
+	public A3PSession(ParcelFileDescriptor parcelFileDescriptor) {
+	
+	
 		this.incomingQ = new ConcurrentLinkedQueue<A3PMessage>();
 		this.commandQ = new ConcurrentLinkedQueue<A3PMessage>();
 		FileDescriptor fd = parcelFileDescriptor.getFileDescriptor();
 		
-		this.arduinoChannel = myChannel;
+//		this.arduinoChannel = myChannel;
 		
 		inputWorker = new A3PInputWorker(this, incomingQ, new FileInputStream(fd));
 		outputWorker = new A3POutputWorker(this, commandQ, new FileOutputStream(fd));
@@ -149,7 +150,9 @@ public class A3PSession {
 		outputWorker.stopWorker();
 
 		Log.v(LOG_TAG, "BEFORE CLOSING DESCRIPTOR");
-		arduinoChannel.closeMyAccessory();
+		
+//		arduinoChannel.closeMyAccessory();
+		
 		Log.v(LOG_TAG, "AFTER CLOSING DESCRIPTOR");	
 		
 		myState = A3PConnectionState.CLOSED;
@@ -467,14 +470,14 @@ public class A3PSession {
 	// also includes messages that were pending to be read!
 	// Uses the same UsbManager and FileDescriptor as was used by 'old'
 	// If old is null, returns null
-	public static A3PSession freshCopy(A3PSession old, ParcelFileDescriptor newFileDescriptor){
-		if (old == null){
-			return null;
-		}
-		A3PSession cleanSession = new A3PSession(old.arduinoChannel, newFileDescriptor);
-		cleanSession.incomingQ.addAll(old.incomingQ);
-		return cleanSession;
-	}
+//	public static A3PSession freshCopy(A3PSession old, ParcelFileDescriptor newFileDescriptor){
+//		if (old == null){
+//			return null;
+//		}
+//		A3PSession cleanSession = new A3PSession(old.arduinoChannel, newFileDescriptor);
+//		cleanSession.incomingQ.addAll(old.incomingQ);
+//		return cleanSession;
+//	}
 	
 	// ^
 	// |

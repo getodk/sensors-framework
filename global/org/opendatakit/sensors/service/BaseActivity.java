@@ -17,7 +17,7 @@ package org.opendatakit.sensors.service;
 
 import java.util.List;
 
-import android.annotation.SuppressLint;
+//import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
@@ -33,7 +33,7 @@ import android.util.Log;
  * @author rohitchaudhri@gmail.com
  *
  */
-@SuppressLint("Registered")
+//@SuppressLint("Registered")
 public class BaseActivity extends Activity {
 	private static final int MAX_RETRY = 3;
 
