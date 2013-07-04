@@ -16,7 +16,7 @@ interface ODKSensorService {
     
     /**
      * Get a set of data 
-     * @param id 			 	sensor id (MAC address)
+     * @param id 			 	sensor id
      * @param maxNumReadings 	maxNumReadings to return
      
      * @return		Bundle of data readings

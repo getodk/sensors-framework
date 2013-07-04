@@ -36,34 +36,62 @@ public abstract class AbstractDriverBaseV2 implements Driver {
 	
 	protected List<SensorParameter> sensorParams = new ArrayList<SensorParameter>();
 	
+	/*
+	 * (non-Javadoc)
+	 * @see org.opendatakit.sensors.Driver#getSensorData(long, java.util.List, byte[])
+	 */
 	@Override
 	public abstract SensorDataParseResponse getSensorData(long maxNumReadings, List<SensorDataPacket> rawSensorData, byte [] remainingData);
 	
+	/*
+	 * (non-Javadoc)
+	 * @see org.opendatakit.sensors.Driver#configureCmd(java.lang.String, android.os.Bundle)
+	 */
 	@Override
 	public byte[] configureCmd(String setting, Bundle config) throws ParameterMissingException {
 		return new byte[0];
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.opendatakit.sensors.Driver#getSensorDataCmd()
+	 */
 	@Override
 	public byte[] getSensorDataCmd() {
 		return new byte[0];
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.opendatakit.sensors.Driver#startCmd()
+	 */
 	@Override
 	public byte[] startCmd() {
 		return new byte[0];
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.opendatakit.sensors.Driver#stopCmd()
+	 */
 	@Override
 	public byte[] stopCmd() {
 		return new byte[0];
 	}
 	
+	/*
+	 * (non-Javadoc)
+	 * @see org.opendatakit.sensors.Driver#sendDataToSensor(android.os.Bundle)
+	 */
 	@Override
 	public byte[] sendDataToSensor(Bundle dataToFormat) {
-		return null;
+		return new byte[0];
 	}
 	
+	/*
+	 * (non-Javadoc)
+	 * @see org.opendatakit.sensors.Driver#getDriverParameters()
+	 */
 	@Override
 	public List<SensorParameter> getDriverParameters() {
 		return sensorParams;
