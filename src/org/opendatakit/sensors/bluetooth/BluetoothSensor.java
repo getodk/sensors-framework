@@ -58,6 +58,8 @@ public class BluetoothSensor extends Thread {
 	private final AtomicBoolean mConnect = new AtomicBoolean(false);
 	private final AtomicBoolean mAttachedStatus = new AtomicBoolean(false);
 	private final AtomicBoolean mKillMe = new AtomicBoolean(false);
+	private final AtomicBoolean isDisconnected = new AtomicBoolean(false);
+	
 	private static final UUID UNIQUE_ID = UUID
 			.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
@@ -236,28 +238,33 @@ public class BluetoothSensor extends Thread {
 	}
 
 	private synchronized void helperResetConnection() {
-		mAttachedStatus.set(false);
-		try {
-			if (sockReader != null) {
-				sockReader.close();
-				sockReader = null;
+
+		if(!isDisconnected.get()) {
+
+			mAttachedStatus.set(false);
+			try {
+				if (sockReader != null) {
+					sockReader.close();
+					sockReader = null;
+				}
+				if (sockWriter != null) {
+					sockWriter.close();
+					sockWriter = null;
+				}
+				if (sock != null) {
+					sock.close();
+					sock = null;
+				}
+				Log.v(LOGTAG, "Connection Thread - Closed Sockets To Sensor: "
+						+ mId);
+			} catch (IOException e) {
+				Log.d(LOGTAG,
+						"Connection Thread - Unable To Close Sockets To Sensor: "
+								+ mId);
 			}
-			if (sockWriter != null) {
-				sockWriter.close();
-				sockWriter = null;
-			}
-			if (sock != null) {
-				sock.close();
-				sock = null;
-			}
-			Log.v(LOGTAG, "Connection Thread - Closed Sockets To Sensor: "
-					+ mId);
-		} catch (IOException e) {
-			Log.d(LOGTAG,
-					"Connection Thread - Unable To Close Sockets To Sensor: "
-							+ mId);
+			mBtManager.updateSensorStateInDb(mId, DetailedSensorState.DISCONNECTED);
+
 		}
-		mBtManager.updateSensorStateInDb(mId, DetailedSensorState.DISCONNECTED);
 	}
 
 	/**
