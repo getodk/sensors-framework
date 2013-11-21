@@ -16,6 +16,7 @@
 package org.opendatakit.sensors.service;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -37,14 +38,14 @@ public class SensorServiceProxy implements ServiceConnection {
 	private ODKSensorService sensorSvcProxy;
 	private String TAG = "MiddlewareProxy"; 
 	protected Context componentContext;
-	protected boolean isBoundToService;
+	protected final AtomicBoolean isBoundToService = new AtomicBoolean(false);
 	
 	public SensorServiceProxy(Context context) {
 		this(context, "org.opendatakit.sensors", "org.opendatakit.sensors.service.SensorService");
 	}
 	
 	public SensorServiceProxy(Context context, String frameworkPackage, String frameworkService) {
-		isBoundToService = false;
+//		isBoundToService = false;
 		componentContext = context;
 		Intent bind_intent = new Intent();
 		bind_intent.setClassName(frameworkPackage, frameworkService);
@@ -53,10 +54,10 @@ public class SensorServiceProxy implements ServiceConnection {
 	
 	public void shutdown() {
 		Log.d(TAG, "Application shutdown - unbinding from SensorService");
-		if(isBoundToService) {
+		if(isBoundToService.get()) {
 			try {
 				componentContext.unbindService(this);
-				isBoundToService = false;
+				isBoundToService.set(false);
 				Log.d(TAG,"unbound to sensor service");
 			}
 			catch(Exception ex) {
@@ -70,13 +71,13 @@ public class SensorServiceProxy implements ServiceConnection {
 	public void onServiceConnected(ComponentName className, IBinder service) {
 		Log.d(TAG,"Bound to sensor service");
 		sensorSvcProxy = ODKSensorService.Stub.asInterface(service);
-		isBoundToService = true;
+		isBoundToService.set(true);
 	}
 
 	@Override
 	public void onServiceDisconnected(ComponentName arg0) {
-		Log.d(TAG,"unbound to sensor service");
-		isBoundToService = false;
+		Log.d(TAG,".onServiceDisconnected. unbound to sensor service");
+		isBoundToService.set(false);
 	}
 	
 	public void sensorConnect(String id, boolean useContentProvider) throws RemoteException{
@@ -188,7 +189,7 @@ public class SensorServiceProxy implements ServiceConnection {
 	}
 	
 	public boolean isBoundToService() {
-		return isBoundToService;
+		return isBoundToService.get();
 	}
 
 }
