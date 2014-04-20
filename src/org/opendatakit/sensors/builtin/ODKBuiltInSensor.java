@@ -59,7 +59,7 @@ public class ODKBuiltInSensor implements ODKSensor,
 
 	// state
 	private Queue<SensorDataPacket> buffer;
-	private boolean usingContentProvider;
+	private String appNameForDatabase;
 	private byte[] remainingBytes;
 
 	private int rate;
@@ -69,21 +69,21 @@ public class ODKBuiltInSensor implements ODKSensor,
 		this.sensorType = type;
 		this.mBuiltInSensorManager = builtInSensorManager;
 		this.sensorId = sensorID;
+		this.appNameForDatabase = null;
 		Class<? extends AbstractBuiltinDriver> sensorClass = sensorType
 				.getDriverClass();
 		Constructor<? extends AbstractBuiltinDriver> constructor;
 		constructor = sensorClass.getConstructor();
 		this.sensorDriver = constructor.newInstance();
 
-		this.usingContentProvider = false;
 		this.buffer = new ConcurrentLinkedQueue<SensorDataPacket>();
 		this.rate = SensorManager.SENSOR_DELAY_NORMAL;
 	}
 
 	@Override
-	public void connect(boolean useContentProvider)
+	public void connect(String appForDatabase)
 			throws SensorNotFoundException {
-		usingContentProvider = useContentProvider;
+		this.appNameForDatabase = appForDatabase;
 		Sensor sensor = mBuiltInSensorManager.getDefaultSensor(sensorType
 				.getType());
 		if (sensor == null) {
@@ -160,11 +160,6 @@ public class ODKBuiltInSensor implements ODKSensor,
 	}
 
 	@Override
-	public boolean usingContentProvider() {
-		return usingContentProvider;
-	}
-
-	@Override
 	public void dataBufferReset() {
 		Log.d(LOGTAG, "dataBufferReset: clearing buffer for sensor ");
 		if (buffer != null) {
@@ -209,6 +204,11 @@ public class ODKBuiltInSensor implements ODKSensor,
 	}
 
 	@Override
+	public String getAppNameForDatabase() {
+		return appNameForDatabase;
+	}
+
+	@Override
 	public boolean hasReadingUi() {
 		return false;
 	}
@@ -217,6 +217,11 @@ public class ODKBuiltInSensor implements ODKSensor,
 	public boolean hasConfigUi() {
 		return false;
 	}
+	
+	@Override
+	public boolean hasAppNameForDatabase() {
+		return (appNameForDatabase != null);
+	}	
 
 	@Override
 	public void sendDataToSensor(Bundle data) {

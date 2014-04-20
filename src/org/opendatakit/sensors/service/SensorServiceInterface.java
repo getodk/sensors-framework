@@ -62,14 +62,18 @@ public class SensorServiceInterface extends ODKSensorService.Stub{
 		mDummyManager = dummyManager;
 	}
 
-	public void sensorConnect(String id, boolean useContentProvider) throws RemoteException {
+	public void sensorConnect(String id, String appForDatabase) throws RemoteException {
 		Log.d(TAG, "sensorConnect. id: " + id);
 		ODKSensor sensor = mSensorManager.getSensor(id);
 
 		try {
 			if(sensor != null) {
+				if (appForDatabase != null) {
+					Log.i(TAG, "Need to create database for sensor:" + id);
+					mSensorManager.parseDriverTableDefintionAndCreateTable(id, appForDatabase);
+				}
 				Log.d(TAG, "calling Facade.connect " + id);
-				sensor.connect(useContentProvider);
+				sensor.connect(appForDatabase);
 				Log.d(TAG, "returned from Facade.connect " + id);
 			}
 		}

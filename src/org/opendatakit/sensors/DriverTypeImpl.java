@@ -29,9 +29,13 @@ public class DriverTypeImpl implements DriverType {
 	private final CommunicationChannelType communicationChannelType;
 	private final String readingUiIntentStr;
 	private final String configUiIntentStr;
-
+	
+	// Optional parameter for writing to a database
+	private final String tableDefinition;
+	
+	// Created a new constructor 
 	public DriverTypeImpl(String driverType, String packageName,
-			String driverAddress, CommunicationChannelType communicationType, String readingUiIntentStr, String configUiIntentStr) {
+			String driverAddress, CommunicationChannelType communicationType, String readingUiIntentStr, String configUiIntentStr, String tableDefinition) {
 
 		this.driverType = driverType;
 		this.packageName = packageName;
@@ -39,6 +43,7 @@ public class DriverTypeImpl implements DriverType {
 		this.communicationChannelType = communicationType;
 		this.readingUiIntentStr = readingUiIntentStr;
 		this.configUiIntentStr = configUiIntentStr;
+		this.tableDefinition = tableDefinition;
 		
 	}
 
@@ -75,6 +80,11 @@ public class DriverTypeImpl implements DriverType {
 	@Override
 	public String getConfigUiIntentStr() {
 		return configUiIntentStr;
+	}
+	
+	@Override
+	public String getTableDefinitionStr() {
+		return tableDefinition;
 	}
 
 	

@@ -38,4 +38,5 @@ public class ManifestMetadata {
 	public static final String FRAMEWORK_VERSION_3 = "V3";
 	
 	public static final String RETURN_ADDRESS = "ODK_sensors_return_address";
+	public static final String TABLE_DEFINITION = "ODK_sensors_table_definition";
 }

@@ -21,6 +21,12 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DataModelDatabaseHelper;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.sensors.CommunicationChannelType;
 import org.opendatakit.sensors.DriverCommunicator;
 import org.opendatakit.sensors.DriverType;
@@ -33,12 +39,12 @@ import org.opendatakit.sensors.SensorStateMachine;
 import org.opendatakit.sensors.bluetooth.BluetoothManager;
 import org.opendatakit.sensors.builtin.ODKBuiltInSensor;
 import org.opendatakit.sensors.builtin.BuiltInSensorType;
-import org.opendatakit.sensors.contentprovider.SensorContentProvider;
 import org.opendatakit.sensors.drivers.ManifestMetadata;
 import org.opendatakit.sensors.tests.DummyManager;
 import org.opendatakit.sensors.usb.USBManager;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 /**
@@ -75,12 +81,13 @@ public class ODKSensorManager {
 		queryNupdateSensorDriverTypes();
 		
 		//XXX FIX THIS: This needs to move to the superclass. being done here because each f/w version has a different contenturi		
-		workerThread = new WorkerThread(svcContext, this, SensorContentProvider.CONTENT_URI_ALL);
+		workerThread = new WorkerThread(svcContext, this);
 		workerThread.start();
 		
 	}			
 	
 	public void initializeRegisteredSensors() {
+		
 		// discover built in sensors
 		android.hardware.SensorManager builtInSensorManager = (android.hardware.SensorManager) svcContext.getSystemService(Context.SENSOR_SERVICE);
 		if(builtInSensorManager != null) {
@@ -135,7 +142,7 @@ public class ODKSensorManager {
 					Log.e(TAG,"driver NOT FOUND for type : " + sensorData.type);
 				}
 			}					
-		}		
+		}
 	}
 	
 	
@@ -175,6 +182,65 @@ public class ODKSensorManager {
 		allDrivers.addAll(usbDrivers);
 		allDrivers.addAll(dummyDrivers);
 		driverTypes = allDrivers;
+		
+		// Now that all drivers have been discovered
+		// Initialize the Tables database as necessary
+		// with the metadata from SensorDriverDiscovery
+		for (DriverType driverType : driverTypes) {
+			String tableDef = driverType.getTableDefinitionStr();
+			if (tableDef != null) {
+				Log.i(TAG,"Init Tables database for driver " +  driverType.getSensorType());
+				
+				// Need to parse out the tableDefinition now
+				// parseDriverTableDefintionAndCreateTable(tableDef, "tables");
+			}
+		}
+	}
+	
+	//public void parseDriverTableDefintionAndCreateTable(String strTableDef, String appNameForDatabase){
+	public void parseDriverTableDefintionAndCreateTable(String sensorId, String appForDatabase){
+		String strTableDef = null;
+		// Get the sensor information from the database
+		SensorData sensorDataFromDb;
+		if (databaseManager.sensorIsInDatabase(sensorId)) {
+			sensorDataFromDb = databaseManager.getSensorDataForId(sensorId);
+			DriverType driver = getDriverType(sensorDataFromDb.type);
+			if (driver != null) {
+				strTableDef = driver.getTableDefinitionStr();
+			}
+		}
+		
+		if (strTableDef == null) {
+			return;
+		}
+		
+		JSONObject jsonTableDef = null;
+		
+		DataModelDatabaseHelper dbh = DataModelDatabaseHelperFactory.getDbHelper(svcContext, appForDatabase);
+		SQLiteDatabase db = dbh.getWritableDatabase();
+		
+		try {
+			
+			jsonTableDef = new JSONObject(strTableDef);
+			
+			String tableName = jsonTableDef.getJSONObject("table").getString("name");
+    	   
+			// Create the table for driver
+   			ODKDatabaseUtils.createOrOpenDBTable(db, tableName);
+   			
+   			// Create the columns for the driver table
+   			JSONArray colJsonArray = jsonTableDef.getJSONObject("table").getJSONArray("columns");
+   			
+   			for (int i = 0; i < colJsonArray.length(); i++) {
+   				JSONObject colJson = colJsonArray.getJSONObject(i);
+   				ODKDatabaseUtils.createNewColumnIntoExistingDBTable(db, tableName, colJson.getString("name"), colJson.getString("type"));
+   			}
+     
+        } catch (JSONException e) {
+        	e.printStackTrace();
+        }
+	    
+	    db.close();
 	}
 
 	public DriverType getDriverType(String type) {
@@ -246,11 +312,11 @@ public class ODKSensorManager {
 		return true;
 	}
 	
-	public List<ODKSensor> getSensorsUsingContentProvider() {
+	public List<ODKSensor> getSensorsUsingAppForDatabase() {
 		List<ODKSensor> sensorList = new ArrayList<ODKSensor>();
 
 		for (ODKSensor sensor : sensors.values()) {
-			if (sensor.usingContentProvider()) {
+			if (sensor.hasAppNameForDatabase()) {
 				sensorList.add(sensor);
 			}
 		}
@@ -331,4 +397,9 @@ public class ODKSensorManager {
 		return false;
 	}
 	
+	public DriverType getSensorDriverType(String sensorId) {
+		DriverType sensorDriverType = getDriverType(databaseManager.sensorQueryType(sensorId));
+		return sensorDriverType;
+
+	}
 }

@@ -18,14 +18,19 @@ package org.opendatakit.sensors.manager;
 import java.util.Iterator;
 import java.util.List;
 
-import org.opendatakit.sensors.Constants;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.opendatakit.common.android.database.DataModelDatabaseHelper;
+import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.sensors.DataSeries;
+import org.opendatakit.sensors.DriverType;
 import org.opendatakit.sensors.ODKSensor;
 
-import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
-import android.net.Uri;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -37,19 +42,24 @@ import android.util.Log;
  */
 public class WorkerThread extends Thread {
 	private static final String TAG = "WorkerThread";
+	private static final String jsonTableStr = "table";
+	private static final String jsonNameStr = "name";
+	private static final String jsonColumnStr = "columns";
+	private static final String jsonTypeStr = "type";
+	private static final String floatDbTypeStr = "FLOAT";
+	private static final String intDbTypeStr = "INTEGER";
+	private static final String stringDbTypeStr = "STRING";
+	private static final String textDbTypeStr = "TEXT";
+	
 	private boolean isRunning;
-	private Uri uri;
-	private ContentResolver resolver;
 	private Context serviceContext;
 	private ODKSensorManager sensorManager;
 
-	public WorkerThread(Context context, ODKSensorManager manager, Uri contentProviderUri) {
+	public WorkerThread(Context context, ODKSensorManager manager) {
 		super("WorkerThread");
 		isRunning = true;
 		serviceContext = context;
 		sensorManager = manager;
-		resolver = serviceContext.getContentResolver();
-		uri = contentProviderUri;
 	}
 
 	public void stopthread() {
@@ -60,15 +70,10 @@ public class WorkerThread extends Thread {
 	@Override
 	public void run() {
 		Log.d(TAG, "worker thread started");		
-		Log.e(TAG,"resolver.getType: " + resolver.getType(uri));
 		
 		while(isRunning) {
-
-			
-
 			try {
-				
-				for(ODKSensor sensor : sensorManager.getSensorsUsingContentProvider()) {
+				for(ODKSensor sensor : sensorManager.getSensorsUsingAppForDatabase()) {
 					moveSensorDataToCP(sensor);
 				}
 				
@@ -88,29 +93,72 @@ public class WorkerThread extends Thread {
 			}
 			else {
 				Iterator<Bundle> iter = bundles.iterator();
-				ContentValues values = new ContentValues();
 				while(iter.hasNext()) {
 					Bundle aBundle = iter.next();	
-					String sensorID = aSensor.getSensorID();
-					String msgType = aBundle.getString(DataSeries.MSG_TYPE);
-					String sensorType = aBundle.getString(DataSeries.SENSOR_TYPE);
-					long ts = aBundle.getLong(DataSeries.SERIES_TIMESTAMP);					
-					int numSamples = aBundle.getInt(DataSeries.NUM_SAMPLES); 										
-					String tempReport = aBundle.getString(DataSeries.DATA_AS_CSV);		
 
-					Log.d(TAG, "sensorID: " + sensorID + " ts: " + ts + "numSamples : " + numSamples + 
-							"msgType: " + msgType + " sensorType: " + sensorType);
-					Log.d(TAG,"sensor data: " + tempReport);
-
-					values.put(Constants.KEY_TIMESTAMP, ts);							
-					values.put(Constants.KEY_SENSOR_ID, sensorID);
-					values.put(Constants.KEY_MSG_TYPE, msgType);							
-					values.put(Constants.KEY_SENSOR_TYPE, sensorType);
-					values.put(Constants.KEY_DATA, tempReport);
-					Uri newuri = resolver.insert(uri, values);
-					Log.e(TAG,"new uri: "+ newuri.toString());
+					DriverType driver = sensorManager.getSensorDriverType(aSensor.getSensorID());
+					if (driver != null && driver.getTableDefinitionStr() != null) {
+						parseSensorDataAndInsertIntoTable(aSensor, driver.getTableDefinitionStr(), aBundle);
+					}
+					
 				}
 			}
 		}
+	}
+	
+	
+	private void parseSensorDataAndInsertIntoTable(ODKSensor aSensor, String strTableDef, Bundle dataBundle){
+		JSONObject jsonTableDef = null;
+		ContentValues tablesValues = new ContentValues();
+		
+		DataModelDatabaseHelper dbh = DataModelDatabaseHelperFactory.getDbHelper(serviceContext, aSensor.getAppNameForDatabase());
+		SQLiteDatabase db = dbh.getWritableDatabase();
+		
+		StringBuilder dbValuesToWrite = new StringBuilder();
+		
+		try {
+			jsonTableDef = new JSONObject(strTableDef);
+			
+			String tableName = jsonTableDef.getJSONObject(jsonTableStr).getString(jsonNameStr);
+    	   
+   			// Create the columns for the driver table
+   			JSONArray colJsonArray = jsonTableDef.getJSONObject(jsonTableStr).getJSONArray(jsonColumnStr);
+   			
+   			for (int i = 0; i < colJsonArray.length(); i++) {
+   				JSONObject colJson = colJsonArray.getJSONObject(i);
+   				String colName = colJson.getString(jsonNameStr);
+   				String colType = colJson.getString(jsonTypeStr);
+
+				if (colType.equalsIgnoreCase(textDbTypeStr) || colType.equalsIgnoreCase(stringDbTypeStr)) {
+					if (colName.equals(DataSeries.SENSOR_ID)) { 
+						tablesValues.put(colName, aSensor.getSensorID());
+						dbValuesToWrite.append(colName).append("=").append(aSensor.getSensorID()).append(" ");
+					} else if (dataBundle.getString(colName) != null) {
+						String colData = dataBundle.getString(colName); 
+						tablesValues.put(colName, colData);
+						dbValuesToWrite.append(colName).append("=").append(colData).append(" ");
+					}
+				} else if (colType.equalsIgnoreCase(intDbTypeStr)) {
+					int colData = dataBundle.getInt(colName);
+					tablesValues.put(colName, colData);
+					dbValuesToWrite.append(colName).append("=").append(colData).append(" ");
+					
+				} else if (colType.equalsIgnoreCase(floatDbTypeStr)) {
+					float colData = dataBundle.getInt(colName);
+					tablesValues.put(colName, colData);
+					dbValuesToWrite.append(colName).append("=").append(colData).append(" ");
+				}
+   			}
+   			
+   			if (tablesValues.size() > 0) {
+   				Log.i(TAG,"Writing db values "+ dbValuesToWrite.toString() +" for sensor:" + aSensor.getSensorID());
+   				ODKDatabaseUtils.writeDataIntoExistingDBTable(db, tableName, tablesValues);
+   			}
+
+        } catch (JSONException e) {
+        	e.printStackTrace();
+        }
+	    
+	    db.close();
 	}
 }

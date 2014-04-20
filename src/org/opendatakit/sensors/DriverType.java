@@ -33,5 +33,7 @@ public interface DriverType {
 	
 	String getReadingUiIntentStr();
 
-	String getConfigUiIntentStr();			
+	String getConfigUiIntentStr();	
+	
+	String getTableDefinitionStr();
 }

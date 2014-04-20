@@ -96,10 +96,10 @@ public class BaseActivity extends Activity {
 		return false;
 	}
 
-	protected void sensorConnect(String id, boolean useContentProvider)
+	protected void sensorConnect(String id, String appForDatabase)
 			throws RemoteException {
 		if (verifyConnection()) {
-			mwProxy.sensorConnect(id, useContentProvider);
+			mwProxy.sensorConnect(id, appForDatabase);
 			return;
 		}
 		throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);

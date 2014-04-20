@@ -57,6 +57,8 @@ public class SensorDriverDiscovery {
 					String driverAddress = data.getString(ManifestMetadata.DRIVER_ADDRESS);
 					String readUiIntentStr = data.getString(ManifestMetadata.DRIVER_READ_UI);
 					String configUiIntentStr = data.getString(ManifestMetadata.DRIVER_CONFIG_UI);
+					// This is an optional field used to write data into a database 
+					String tableDefinition = data.getString(ManifestMetadata.TABLE_DEFINITION);
 					
 					if(frameworkVersion == null) {
 						continue;
@@ -67,8 +69,8 @@ public class SensorDriverDiscovery {
 					// verify driver version & comm channel type is correct
 					if(version.equals(frameworkVersion) && commChannelType1.equals(commChannel) && driverCommChannel != null && driverType != null && driverAddress != null) {
 						Log.d(LOGTAG ,"Adding Driver for Package: "+ driverPackageName + "  Driver address: " + driverAddress);  
-						DriverType driver = new DriverTypeImpl(driverType, driverPackageName, driverAddress, commChannel, readUiIntentStr, configUiIntentStr);
-						drivers.add(driver);        										
+						DriverType driver = new DriverTypeImpl(driverType, driverPackageName, driverAddress, commChannel, readUiIntentStr, configUiIntentStr, tableDefinition);
+						drivers.add(driver); 
 					} else {
 						Log.d(LOGTAG ,"NOT ADDING Driver for Package: "+ driverPackageName + "  Driver address: " + driverAddress);  
 					}

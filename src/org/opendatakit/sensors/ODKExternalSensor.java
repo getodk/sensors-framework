@@ -37,7 +37,7 @@ public class ODKExternalSensor implements ODKSensor {
 	private static final String LOGTAG = "ODKExternalSensor";
 
 	private String sensorId;
-	private boolean usingContentProvider;
+	private String appNameForDatabase;
 	private ChannelManager commChannelManager;
 	private DriverCommunicator sensorDriverCom;
 	private Queue<SensorDataPacket> buffer;
@@ -54,7 +54,7 @@ public class ODKExternalSensor implements ODKSensor {
 		this.readingUiIntentStr = readingUiIntentStr;
 		this.configUiIntentStr = configUiIntentStr;
 
-		this.usingContentProvider = false;
+		this.appNameForDatabase = null;
 		clientCounter = 0;
 		this.buffer = new ConcurrentLinkedQueue<SensorDataPacket>();
 	}
@@ -63,10 +63,10 @@ public class ODKExternalSensor implements ODKSensor {
 	 * @see org.opendatakit.sensors.ODKSensorInterface#connect(boolean)
 	 */
 	@Override
-	public void connect(boolean useContentProvider)
+	public void connect(String appForDatabase)
 			throws SensorNotFoundException {
 		try {
-			usingContentProvider = useContentProvider;
+			this.appNameForDatabase = appForDatabase;
 			commChannelManager.sensorConnect(sensorId);			
 		} catch (SensorNotFoundException snfe) {
 			snfe.printStackTrace();
@@ -200,14 +200,6 @@ public class ODKExternalSensor implements ODKSensor {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.opendatakit.sensors.ODKSensorInterface#usingContentProvider()
-	 */
-	@Override
-	public boolean usingContentProvider() {
-		return usingContentProvider;
-	}
-
-	/* (non-Javadoc)
 	 * @see org.opendatakit.sensors.ODKSensorInterface#shutdown()
 	 */
 	@Override
@@ -235,6 +227,14 @@ public class ODKExternalSensor implements ODKSensor {
 	public String getConfigUiIntentStr() {
 		return configUiIntentStr;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.opendatakit.sensors.ODKSensorInterface#getAppNameForDatabase()
+	 */
+	@Override
+	public String getAppNameForDatabase() {
+		return appNameForDatabase;
+	}
 
 	/* (non-Javadoc)
 	 * @see org.opendatakit.sensors.ODKSensorInterface#hasReadingUi()
@@ -250,5 +250,13 @@ public class ODKExternalSensor implements ODKSensor {
 	@Override
 	public boolean hasConfigUi() {
 		return (configUiIntentStr != null);
-	}		
+	}	
+	
+	/* (non-Javadoc)
+	 * @see org.opendatakit.sensors.ODKSensorInterface#hasAppNameForDatabase()
+	 */
+	@Override
+	public boolean hasAppNameForDatabase() {
+		return (appNameForDatabase != null);
+	}	
 }

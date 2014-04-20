@@ -303,6 +303,33 @@ public class DatabaseManager {
 		else
 			return true;
 	}
+	
+	/**
+	 * Query list of all available sensors
+	 * @return list of known sensor
+	 */
+	public synchronized SensorData getSensorDataForId( String sensorId ) {
+		SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+
+		// query columns
+		String[] cols = { SensorTable.ID, SensorTable.NAME, SensorTable.TYPE, SensorTable.STATE};
+		String[] args = { sensorId };
+		
+		// run query
+		Cursor cursor = db.query(SensorTable.TABLE_NAME, cols, SensorTable.ID + "=?", args, null, null, null);
+
+		// parse results
+		SensorData data = new SensorData();
+		while (cursor.moveToNext()) {
+			data.id = cursor.getString(0);
+			data.name = cursor.getString(1);
+			data.type = cursor.getString(2);
+			data.state = DetailedSensorState.valueOf(cursor.getString(3));
+		}
+
+		cursor.close();
+		return data;
+	}
 
 	/**
 	 * Query list of all available sensors

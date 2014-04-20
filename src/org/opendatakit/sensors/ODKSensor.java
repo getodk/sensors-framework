@@ -29,7 +29,7 @@ import android.os.Bundle;
  */
 public interface ODKSensor {
 
-	public abstract void connect(boolean useContentProvider)
+	public abstract void connect(String appForDatabase)
 			throws SensorNotFoundException;
 
 	public abstract CommunicationChannelType getCommunicationChannelType();
@@ -69,16 +69,18 @@ public interface ODKSensor {
 	 */
 	public abstract void dataBufferReset();
 
-	public abstract boolean usingContentProvider();
-
 	public abstract void shutdown() throws SensorNotFoundException;
 
 	public abstract String getReadingUiIntentStr();
 
 	public abstract String getConfigUiIntentStr();
+	
+	public abstract String getAppNameForDatabase();
 
 	public abstract boolean hasReadingUi();
 
 	public abstract boolean hasConfigUi();
+	
+	public abstract boolean hasAppNameForDatabase();
 
 }

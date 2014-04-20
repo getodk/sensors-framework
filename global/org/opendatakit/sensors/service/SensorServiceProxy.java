@@ -79,9 +79,9 @@ public class SensorServiceProxy implements ServiceConnection {
 		isBoundToService.set(false);
 	}
 	
-	public void sensorConnect(String id, boolean useContentProvider) throws RemoteException{
+	public void sensorConnect(String id, String appForDatabase) throws RemoteException{
 		try {
-			sensorSvcProxy.sensorConnect(id, useContentProvider);
+			sensorSvcProxy.sensorConnect(id, appForDatabase);
 		}
 		catch(RemoteException rex) {
 			rex.printStackTrace();
