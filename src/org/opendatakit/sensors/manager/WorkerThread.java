@@ -30,6 +30,7 @@ import org.opendatakit.sensors.ODKSensor;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
@@ -120,6 +121,16 @@ public class WorkerThread extends Thread {
 			jsonTableDef = new JSONObject(strTableDef);
 			
 			String tableName = jsonTableDef.getJSONObject(jsonTableStr).getString(jsonNameStr);
+			
+			if (tableName != null) {
+			    Cursor cursor = db.rawQuery("select DISTINCT tbl_name from sqlite_master where tbl_name = '"+tableName+"'", null);
+			    if(cursor!=null) {
+			        if(cursor.getCount() <= 0) {
+			            sensorManager.parseDriverTableDefintionAndCreateTable(aSensor.getSensorID(), aSensor.getAppNameForDatabase(), db);
+			        }
+			        cursor.close();
+			    }
+			}
     	   
    			// Create the columns for the driver table
    			JSONArray colJsonArray = jsonTableDef.getJSONObject(jsonTableStr).getJSONArray(jsonColumnStr);

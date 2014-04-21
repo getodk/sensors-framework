@@ -182,23 +182,9 @@ public class ODKSensorManager {
 		allDrivers.addAll(usbDrivers);
 		allDrivers.addAll(dummyDrivers);
 		driverTypes = allDrivers;
-		
-		// Now that all drivers have been discovered
-		// Initialize the Tables database as necessary
-		// with the metadata from SensorDriverDiscovery
-		for (DriverType driverType : driverTypes) {
-			String tableDef = driverType.getTableDefinitionStr();
-			if (tableDef != null) {
-				Log.i(TAG,"Init Tables database for driver " +  driverType.getSensorType());
-				
-				// Need to parse out the tableDefinition now
-				// parseDriverTableDefintionAndCreateTable(tableDef, "tables");
-			}
-		}
 	}
 	
-	//public void parseDriverTableDefintionAndCreateTable(String strTableDef, String appNameForDatabase){
-	public void parseDriverTableDefintionAndCreateTable(String sensorId, String appForDatabase){
+	public void parseDriverTableDefintionAndCreateTable(String sensorId, String appForDatabase, SQLiteDatabase db){
 		String strTableDef = null;
 		// Get the sensor information from the database
 		SensorData sensorDataFromDb;
@@ -215,9 +201,6 @@ public class ODKSensorManager {
 		}
 		
 		JSONObject jsonTableDef = null;
-		
-		DataModelDatabaseHelper dbh = DataModelDatabaseHelperFactory.getDbHelper(svcContext, appForDatabase);
-		SQLiteDatabase db = dbh.getWritableDatabase();
 		
 		try {
 			
