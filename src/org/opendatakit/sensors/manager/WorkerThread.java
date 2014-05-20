@@ -19,10 +19,10 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.utilities.ODKDatabaseUserDefinedTypes;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.sensors.DataSeries;
 import org.opendatakit.sensors.DriverType;
@@ -47,10 +47,6 @@ public class WorkerThread extends Thread {
 	private static final String jsonNameStr = "name";
 	private static final String jsonColumnStr = "columns";
 	private static final String jsonTypeStr = "type";
-	private static final String floatDbTypeStr = "FLOAT";
-	private static final String intDbTypeStr = "INTEGER";
-	private static final String stringDbTypeStr = "STRING";
-	private static final String textDbTypeStr = "TEXT";
 	
 	private boolean isRunning;
 	private Context serviceContext;
@@ -140,7 +136,9 @@ public class WorkerThread extends Thread {
    				String colName = colJson.getString(jsonNameStr);
    				String colType = colJson.getString(jsonTypeStr);
 
-				if (colType.equalsIgnoreCase(textDbTypeStr) || colType.equalsIgnoreCase(stringDbTypeStr)) {
+   				if (colType.equals(ODKDatabaseUserDefinedTypes.STRING) || colType.equals(ODKDatabaseUserDefinedTypes.MIMEURI) ||
+   			    	    colType.equals(ODKDatabaseUserDefinedTypes.DATE) || colType.equals(ODKDatabaseUserDefinedTypes.DATETIME) ||
+   			    	    colType.equals(ODKDatabaseUserDefinedTypes.TIME) || colType.equals(ODKDatabaseUserDefinedTypes.ARRAY)) {
 					if (colName.equals(DataSeries.SENSOR_ID)) { 
 						tablesValues.put(colName, aSensor.getSensorID());
 						dbValuesToWrite.append(colName).append("=").append(aSensor.getSensorID()).append(" ");
@@ -149,16 +147,18 @@ public class WorkerThread extends Thread {
 						tablesValues.put(colName, colData);
 						dbValuesToWrite.append(colName).append("=").append(colData).append(" ");
 					}
-				} else if (colType.equalsIgnoreCase(intDbTypeStr)) {
+   				} else if (colType.equals(ODKDatabaseUserDefinedTypes.BOOLEAN) || colType.equals(ODKDatabaseUserDefinedTypes.INTEGER)) {
 					int colData = dataBundle.getInt(colName);
 					tablesValues.put(colName, colData);
 					dbValuesToWrite.append(colName).append("=").append(colData).append(" ");
 					
-				} else if (colType.equalsIgnoreCase(floatDbTypeStr)) {
-					float colData = dataBundle.getInt(colName);
+				} else if (colType.equalsIgnoreCase(ODKDatabaseUserDefinedTypes.NUMBER) || colType.equalsIgnoreCase(ODKDatabaseUserDefinedTypes.GEOPOINT)) {
+					double colData = dataBundle.getDouble(colName);
 					tablesValues.put(colName, colData);
 					dbValuesToWrite.append(colName).append("=").append(colData).append(" ");
-				}
+				} else {
+	   			    Log.i(TAG, "parseSensorDataAndInsertIntoTable: Couldn't convert " + colType + " to a database type");
+	   			}
    			}
    			
    			if (tablesValues.size() > 0) {
@@ -166,7 +166,7 @@ public class WorkerThread extends Thread {
    				ODKDatabaseUtils.writeDataIntoExistingDBTable(db, tableName, tablesValues);
    			}
 
-        } catch (JSONException e) {
+        } catch (Exception e) {
         	e.printStackTrace();
         }
 	    

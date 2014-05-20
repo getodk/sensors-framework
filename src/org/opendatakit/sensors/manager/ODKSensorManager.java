@@ -18,14 +18,12 @@ package org.opendatakit.sensors.manager;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
-import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.sensors.CommunicationChannelType;
 import org.opendatakit.sensors.DriverCommunicator;
@@ -208,18 +206,20 @@ public class ODKSensorManager {
 			
 			String tableName = jsonTableDef.getJSONObject("table").getString("name");
     	   
-			// Create the table for driver
-   			ODKDatabaseUtils.createOrOpenDBTable(db, tableName);
+			LinkedHashMap<String, String> columns = new LinkedHashMap<String, String>();
    			
    			// Create the columns for the driver table
    			JSONArray colJsonArray = jsonTableDef.getJSONObject("table").getJSONArray("columns");
    			
    			for (int i = 0; i < colJsonArray.length(); i++) {
    				JSONObject colJson = colJsonArray.getJSONObject(i);
-   				ODKDatabaseUtils.createNewColumnIntoExistingDBTable(db, tableName, colJson.getString("name"), colJson.getString("type"));
+   				columns.put(colJson.getString("name"), colJson.getString("type"));
    			}
+   			
+   			// Create the table for driver
+   			ODKDatabaseUtils.createOrOpenDBTableWithColumns(db, tableName, columns);
      
-        } catch (JSONException e) {
+        } catch (Exception e) {
         	e.printStackTrace();
         }
 	    
