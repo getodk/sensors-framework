@@ -15,6 +15,7 @@
  */
 package org.opendatakit.sensors.manager;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -25,6 +26,8 @@ import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.provider.DataTableColumns;
+import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKJsonNames;
 import org.opendatakit.sensors.DataSeries;
@@ -143,10 +146,8 @@ public class WorkerThread extends Thread {
             throw new SQLException("Unable to create tableId " + tableId);
           }
 
-		    final String dbTableName = "\"" + tableId + "\"";
-         
 			List<Column> columns = ODKDatabaseUtils.getUserDefinedColumns(db, tableId);
-			List<ColumnDefinition> orderedDefs = ColumnDefinition.buildColumnDefinitions(columns);
+			ArrayList<ColumnDefinition> orderedDefs = ColumnDefinition.buildColumnDefinitions(columns);
 			
  			// Create the columns for the driver table
 			for ( ColumnDefinition col : orderedDefs ) {
@@ -187,7 +188,13 @@ public class WorkerThread extends Thread {
    			
  			if (tablesValues.size() > 0) {
  				Log.i(TAG,"Writing db values for sensor:" + aSensor.getSensorID());
- 				ODKDatabaseUtils.writeDataIntoExistingDBTable(db, dbTableName, tablesValues);
+ 				String rowId = tablesValues.containsKey(DataTableColumns.ID) ? 
+ 				  tablesValues.getAsString(DataTableColumns.ID) : null;
+ 				if ( rowId == null ) {
+ 				  rowId = ODKDataUtils.genUUID();
+ 				}
+ 				ODKDatabaseUtils.insertDataIntoExistingDBTableWithId(db, tableId, orderedDefs, 
+ 				    tablesValues, rowId);
  			}
 
         } catch (Exception e) {
