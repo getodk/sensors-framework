@@ -74,7 +74,7 @@ public class WorkerThread extends Thread {
 					moveSensorDataToCP(sensor);
 				}
 				
-				Thread.sleep(300);
+				Thread.sleep(1000);
 			}
 			catch(InterruptedException iex) {
 				iex.printStackTrace();
