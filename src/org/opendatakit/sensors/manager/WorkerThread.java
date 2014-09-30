@@ -156,7 +156,7 @@ public class WorkerThread extends Thread {
 			  }
 
 			  String colName = col.getElementKey();
-			  ElementType type = ElementType.parseElementType(col.getElementType(), !col.getChildren().isEmpty());
+			  ElementType type = col.getType();
 			  
 			  if ( colName.equals(DataSeries.SENSOR_ID) ) {
 
