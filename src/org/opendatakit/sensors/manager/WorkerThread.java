@@ -21,10 +21,9 @@ import java.util.List;
 
 import org.json.JSONObject;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.ElementDataType;
 import org.opendatakit.common.android.data.ElementType;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
@@ -48,159 +47,164 @@ import android.util.Log;
  * 
  */
 public class WorkerThread extends Thread {
-	private static final String TAG = "WorkerThread";
-	
-	private boolean isRunning;
-	private Context serviceContext;
-	private ODKSensorManager sensorManager;
+  private static final String TAG = "WorkerThread";
 
-	public WorkerThread(Context context, ODKSensorManager manager) {
-		super("WorkerThread");
-		isRunning = true;
-		serviceContext = context;
-		sensorManager = manager;
-	}
+  private boolean isRunning;
+  private Context serviceContext;
+  private ODKSensorManager sensorManager;
 
-	public void stopthread() {
-		isRunning = false;
-		this.interrupt();
-	}
+  public WorkerThread(Context context, ODKSensorManager manager) {
+    super("WorkerThread");
+    isRunning = true;
+    serviceContext = context;
+    sensorManager = manager;
+  }
 
-	@Override
-	public void run() {
-		Log.d(TAG, "worker thread started");		
-		
-		while(isRunning) {
-			try {
-				for(ODKSensor sensor : sensorManager.getSensorsUsingAppForDatabase()) {
-					moveSensorDataToCP(sensor);
-				}
-				
-				Thread.sleep(300);
-			}
-			catch(InterruptedException iex) {
-				iex.printStackTrace();
-			}
-		}
-	}
+  public void stopthread() {
+    isRunning = false;
+    this.interrupt();
+  }
 
-	private void moveSensorDataToCP(ODKSensor aSensor) {		
-		if (aSensor != null) {			
-			List<Bundle> bundles = aSensor.getSensorData(0);//XXX for now this gets all data fm sensor			
-			if(bundles == null) {
-				Log.e(TAG,"WTF null list of bundles~");
-			}
-			else {
-				Iterator<Bundle> iter = bundles.iterator();
-				while(iter.hasNext()) {
-					Bundle aBundle = iter.next();	
+  @Override
+  public void run() {
+    Log.d(TAG, "worker thread started");
 
-					DriverType driver = sensorManager.getSensorDriverType(aSensor.getSensorID());
-					if (driver != null && driver.getTableDefinitionStr() != null) {
-						parseSensorDataAndInsertIntoTable(aSensor, driver.getTableDefinitionStr(), aBundle);
-					}
-					
-				}
-			}
-		}
-	}
-	
-	
-	private void parseSensorDataAndInsertIntoTable(ODKSensor aSensor, String strTableDef, Bundle dataBundle){
-		JSONObject jsonTableDef = null;
-		ContentValues tablesValues = new ContentValues();
-		
-		DataModelDatabaseHelper dbh = DataModelDatabaseHelperFactory.getDbHelper(serviceContext, aSensor.getAppNameForDatabase());
-		SQLiteDatabase db = dbh.getWritableDatabase();
-		
-		try {
-			jsonTableDef = new JSONObject(strTableDef);
-			
-			String tableId = jsonTableDef.getJSONObject(ODKJsonNames.jsonTableStr).getString(ODKJsonNames.jsonTableIdStr);
-			
-			if (tableId == null) {
-			  return;
-			}
-
-		    boolean success;
-		    
-		    success = false;
-		    try {
-		      success = ODKDatabaseUtils.hasTableId(db, tableId);
-		    } catch ( Exception e ) {
-		      e.printStackTrace();
-		      throw new SQLException("Exception testing for tableId " + tableId);
-		    }
-		    if (!success) {
-	           sensorManager.parseDriverTableDefintionAndCreateTable(aSensor.getSensorID(), aSensor.getAppNameForDatabase(), db);
-		    }
-
-          success = false;
-          try {
-            success = ODKDatabaseUtils.hasTableId(db, tableId);
-          } catch ( Exception e ) {
-            e.printStackTrace();
-            throw new SQLException("Exception testing for tableId " + tableId);
-          }
-          if (!success) {
-            throw new SQLException("Unable to create tableId " + tableId);
-          }
-
-			List<Column> columns = ODKDatabaseUtils.getUserDefinedColumns(db, tableId);
-			ArrayList<ColumnDefinition> orderedDefs = ColumnDefinition.buildColumnDefinitions(columns);
-			
- 			// Create the columns for the driver table
-			for ( ColumnDefinition col : orderedDefs ) {
-			  if ( !col.isUnitOfRetention() ) {
-			    continue;
-			  }
-
-			  String colName = col.getElementKey();
-			  ElementType type = col.getType();
-			  
-			  if ( colName.equals(DataSeries.SENSOR_ID) ) {
-
-			    // special treatment
-			    tablesValues.put(colName, aSensor.getSensorID());
-
-			  } else if ( type.getDataType() == ElementDataType.bool ) {
-
-			    Boolean boolColData = dataBundle.containsKey(colName) ? dataBundle.getBoolean(colName) : null;
-             Integer colData = (boolColData == null) ? null : (boolColData ? 1 : 0); 
-             tablesValues.put(colName, colData);
-			    
-           } else if ( type.getDataType() == ElementDataType.integer ) {
-             
-             Integer colData = dataBundle.containsKey(colName) ? dataBundle.getInt(colName) : null;
-             tablesValues.put(colName, colData);
-             
-           } else if ( type.getDataType() == ElementDataType.number ) {
-             
-             Double colData = dataBundle.containsKey(colName) ? dataBundle.getDouble(colName) : null;
-             tablesValues.put(colName, colData);
-             
-           } else {
-             // everything else is a string value coming across the wire...
-             String colData = dataBundle.containsKey(colName) ? dataBundle.getString(colName) : null;
-             tablesValues.put(colName, colData);
-			  }
-			}
-   			
- 			if (tablesValues.size() > 0) {
- 				Log.i(TAG,"Writing db values for sensor:" + aSensor.getSensorID());
- 				String rowId = tablesValues.containsKey(DataTableColumns.ID) ? 
- 				  tablesValues.getAsString(DataTableColumns.ID) : null;
- 				if ( rowId == null ) {
- 				  rowId = ODKDataUtils.genUUID();
- 				}
- 				ODKDatabaseUtils.insertDataIntoExistingDBTableWithId(db, tableId, orderedDefs, 
- 				    tablesValues, rowId);
- 			}
-
-        } catch (Exception e) {
-        	e.printStackTrace();
+    while (isRunning) {
+      try {
+        for (ODKSensor sensor : sensorManager.getSensorsUsingAppForDatabase()) {
+          moveSensorDataToCP(sensor);
         }
-	    
-	    db.close();
-	}
+
+        Thread.sleep(300);
+      } catch (InterruptedException iex) {
+        iex.printStackTrace();
+      }
+    }
+  }
+
+  private void moveSensorDataToCP(ODKSensor aSensor) {
+    if (aSensor != null) {
+      List<Bundle> bundles = aSensor.getSensorData(0);// XXX for now this gets
+                                                      // all data fm sensor
+      if (bundles == null) {
+        Log.e(TAG, "WTF null list of bundles~");
+      } else {
+        Iterator<Bundle> iter = bundles.iterator();
+        while (iter.hasNext()) {
+          Bundle aBundle = iter.next();
+
+          DriverType driver = sensorManager.getSensorDriverType(aSensor.getSensorID());
+          if (driver != null && driver.getTableDefinitionStr() != null) {
+            parseSensorDataAndInsertIntoTable(aSensor, driver.getTableDefinitionStr(), aBundle);
+          }
+
+        }
+      }
+    }
+  }
+
+  private void parseSensorDataAndInsertIntoTable(ODKSensor aSensor, String strTableDef,
+      Bundle dataBundle) {
+    JSONObject jsonTableDef = null;
+    ContentValues tablesValues = new ContentValues();
+
+    SQLiteDatabase db = null;
+    try {
+      db = DataModelDatabaseHelperFactory.getDatabase(serviceContext,
+          aSensor.getAppNameForDatabase());
+
+      jsonTableDef = new JSONObject(strTableDef);
+
+      String tableId = jsonTableDef.getJSONObject(ODKJsonNames.jsonTableStr).getString(
+          ODKJsonNames.jsonTableIdStr);
+
+      if (tableId == null) {
+        return;
+      }
+
+      boolean success;
+
+      success = false;
+      try {
+        success = ODKDatabaseUtils.get().hasTableId(db, tableId);
+      } catch (Exception e) {
+        e.printStackTrace();
+        throw new SQLException("Exception testing for tableId " + tableId);
+      }
+      if (!success) {
+        sensorManager.parseDriverTableDefintionAndCreateTable(aSensor.getSensorID(),
+            aSensor.getAppNameForDatabase(), db);
+      }
+
+      success = false;
+      try {
+        success = ODKDatabaseUtils.get().hasTableId(db, tableId);
+      } catch (Exception e) {
+        e.printStackTrace();
+        throw new SQLException("Exception testing for tableId " + tableId);
+      }
+      if (!success) {
+        throw new SQLException("Unable to create tableId " + tableId);
+      }
+
+      List<Column> columns = ODKDatabaseUtils.get().getUserDefinedColumns(db, tableId);
+      ArrayList<ColumnDefinition> orderedDefs = ColumnDefinition.buildColumnDefinitions(columns);
+
+      // Create the columns for the driver table
+      for (ColumnDefinition col : orderedDefs) {
+        if (!col.isUnitOfRetention()) {
+          continue;
+        }
+
+        String colName = col.getElementKey();
+        ElementType type = col.getType();
+
+        if (colName.equals(DataSeries.SENSOR_ID)) {
+
+          // special treatment
+          tablesValues.put(colName, aSensor.getSensorID());
+
+        } else if (type.getDataType() == ElementDataType.bool) {
+
+          Boolean boolColData = dataBundle.containsKey(colName) ? dataBundle.getBoolean(colName)
+              : null;
+          Integer colData = (boolColData == null) ? null : (boolColData ? 1 : 0);
+          tablesValues.put(colName, colData);
+
+        } else if (type.getDataType() == ElementDataType.integer) {
+
+          Integer colData = dataBundle.containsKey(colName) ? dataBundle.getInt(colName) : null;
+          tablesValues.put(colName, colData);
+
+        } else if (type.getDataType() == ElementDataType.number) {
+
+          Double colData = dataBundle.containsKey(colName) ? dataBundle.getDouble(colName) : null;
+          tablesValues.put(colName, colData);
+
+        } else {
+          // everything else is a string value coming across the wire...
+          String colData = dataBundle.containsKey(colName) ? dataBundle.getString(colName) : null;
+          tablesValues.put(colName, colData);
+        }
+      }
+
+      if (tablesValues.size() > 0) {
+        Log.i(TAG, "Writing db values for sensor:" + aSensor.getSensorID());
+        String rowId = tablesValues.containsKey(DataTableColumns.ID) ? tablesValues
+            .getAsString(DataTableColumns.ID) : null;
+        if (rowId == null) {
+          rowId = ODKDataUtils.genUUID();
+        }
+        ODKDatabaseUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedDefs,
+            tablesValues, rowId);
+      }
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      if (db != null) {
+        db.close();
+      }
+    }
+  }
 }
