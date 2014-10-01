@@ -20,7 +20,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.json.JSONObject;
-import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.ElementDataType;
 import org.opendatakit.common.android.data.ElementType;
@@ -29,6 +28,7 @@ import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKJsonNames;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.sensors.DataSeries;
 import org.opendatakit.sensors.DriverType;
 import org.opendatakit.sensors.ODKSensor;
@@ -147,8 +147,7 @@ public class WorkerThread extends Thread {
         throw new SQLException("Unable to create tableId " + tableId);
       }
 
-      List<Column> columns = ODKDatabaseUtils.get().getUserDefinedColumns(db, tableId);
-      ArrayList<ColumnDefinition> orderedDefs = ColumnDefinition.buildColumnDefinitions(columns);
+      ArrayList<ColumnDefinition> orderedDefs = TableUtil.get().getColumnDefinitions(db, tableId);
 
       // Create the columns for the driver table
       for (ColumnDefinition col : orderedDefs) {
