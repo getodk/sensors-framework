@@ -18,13 +18,14 @@ package org.opendatakit.sensors.manager;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.common.android.utilities.ODKJsonNames;
 import org.opendatakit.sensors.CommunicationChannelType;
 import org.opendatakit.sensors.DriverCommunicator;
 import org.opendatakit.sensors.DriverType;
@@ -35,8 +36,8 @@ import org.opendatakit.sensors.SensorDataPacket;
 import org.opendatakit.sensors.SensorDriverDiscovery;
 import org.opendatakit.sensors.SensorStateMachine;
 import org.opendatakit.sensors.bluetooth.BluetoothManager;
-import org.opendatakit.sensors.builtin.ODKBuiltInSensor;
 import org.opendatakit.sensors.builtin.BuiltInSensorType;
+import org.opendatakit.sensors.builtin.ODKBuiltInSensor;
 import org.opendatakit.sensors.drivers.ManifestMetadata;
 import org.opendatakit.sensors.tests.DummyManager;
 import org.opendatakit.sensors.usb.USBManager;
@@ -201,23 +202,29 @@ public class ODKSensorManager {
 		JSONObject jsonTableDef = null;
 		
 		try {
-			
+
 			jsonTableDef = new JSONObject(strTableDef);
 			
-			String tableName = jsonTableDef.getJSONObject("table").getString("name");
+			JSONObject theTableDef = jsonTableDef.getJSONObject(ODKJsonNames.jsonTableStr);
+			
+			String tableId = theTableDef.getString(ODKJsonNames.jsonTableIdStr);
     	   
-			LinkedHashMap<String, String> columns = new LinkedHashMap<String, String>();
-   			
-   			// Create the columns for the driver table
-   			JSONArray colJsonArray = jsonTableDef.getJSONObject("table").getJSONArray("columns");
-   			
-   			for (int i = 0; i < colJsonArray.length(); i++) {
-   				JSONObject colJson = colJsonArray.getJSONObject(i);
-   				columns.put(colJson.getString("name"), colJson.getString("type"));
-   			}
-   			
-   			// Create the table for driver
-   			ODKDatabaseUtils.createOrOpenDBTableWithColumns(db, tableName, columns);
+			List<Column> columns = new ArrayList<Column>();
+ 			
+ 			// Create the columns for the driver table
+ 			JSONArray colJsonArray = theTableDef.getJSONArray(ODKJsonNames.jsonColumnsStr);
+ 			
+ 			for (int i = 0; i < colJsonArray.length(); i++) {
+ 				JSONObject colJson = colJsonArray.getJSONObject(i);
+             String elementKey = colJson.getString(ODKJsonNames.jsonElementKeyStr);
+ 				String elementName = colJson.getString(ODKJsonNames.jsonElementNameStr);
+             String elementType = colJson.getString(ODKJsonNames.jsonElementTypeStr);
+             String listChildElementKeys = colJson.getString(ODKJsonNames.jsonListChildElementKeysStr);
+             columns.add(new Column(elementKey, elementName, elementType, listChildElementKeys));
+ 			}
+ 			
+ 			// Create the table for driver
+ 			ODKDatabaseUtils.get().createOrOpenDBTableWithColumns(db, tableId, columns);
      
         } catch (Exception e) {
         	e.printStackTrace();
