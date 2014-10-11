@@ -147,7 +147,7 @@ public class WorkerThread extends Thread {
         throw new SQLException("Unable to create tableId " + tableId);
       }
 
-      ArrayList<ColumnDefinition> orderedDefs = TableUtil.get().getColumnDefinitions(db, tableId);
+      ArrayList<ColumnDefinition> orderedDefs = TableUtil.get().getColumnDefinitions(db, aSensor.getAppNameForDatabase(), tableId);
 
       // Create the columns for the driver table
       for (ColumnDefinition col : orderedDefs) {

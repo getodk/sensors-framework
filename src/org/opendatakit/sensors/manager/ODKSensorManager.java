@@ -183,7 +183,7 @@ public class ODKSensorManager {
 		driverTypes = allDrivers;
 	}
 	
-	public void parseDriverTableDefintionAndCreateTable(String sensorId, String appForDatabase, SQLiteDatabase db){
+	public void parseDriverTableDefintionAndCreateTable(String sensorId, String appName, SQLiteDatabase db){
 		String strTableDef = null;
 		// Get the sensor information from the database
 		SensorData sensorDataFromDb;
@@ -224,7 +224,7 @@ public class ODKSensorManager {
  			}
  			
  			// Create the table for driver
- 			ODKDatabaseUtils.get().createOrOpenDBTableWithColumns(db, tableId, columns);
+ 			ODKDatabaseUtils.get().createOrOpenDBTableWithColumns(db, appName, tableId, columns);
      
         } catch (Exception e) {
         	e.printStackTrace();
