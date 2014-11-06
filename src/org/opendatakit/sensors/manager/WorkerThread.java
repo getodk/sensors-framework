@@ -75,7 +75,7 @@ public class WorkerThread extends Thread {
           moveSensorDataToCP(sensor);
         }
 
-        Thread.sleep(300);
+        Thread.sleep(3000);
       } catch (InterruptedException iex) {
         iex.printStackTrace();
       }
@@ -147,7 +147,7 @@ public class WorkerThread extends Thread {
         throw new SQLException("Unable to create tableId " + tableId);
       }
 
-      ArrayList<ColumnDefinition> orderedDefs = TableUtil.get().getColumnDefinitions(db, tableId);
+      ArrayList<ColumnDefinition> orderedDefs = TableUtil.get().getColumnDefinitions(db, "tables", tableId);
 
       // Create the columns for the driver table
       for (ColumnDefinition col : orderedDefs) {

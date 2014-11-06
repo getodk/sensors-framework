@@ -224,7 +224,8 @@ public class ODKSensorManager {
  			}
  			
  			// Create the table for driver
- 			ODKDatabaseUtils.get().createOrOpenDBTableWithColumns(db, tableId, columns);
+ 			// TODO: Change this to not be hardcoded to be tables
+ 			ODKDatabaseUtils.get().createOrOpenDBTableWithColumns(db, "tables", tableId, columns);
      
         } catch (Exception e) {
         	e.printStackTrace();
