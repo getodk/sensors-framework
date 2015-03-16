@@ -24,8 +24,9 @@ import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.common.android.data.ColumnList;
 import org.opendatakit.common.android.utilities.ODKJsonNames;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.sensors.CommunicationChannelType;
 import org.opendatakit.sensors.DriverCommunicator;
 import org.opendatakit.sensors.DriverType;
@@ -43,7 +44,6 @@ import org.opendatakit.sensors.tests.DummyManager;
 import org.opendatakit.sensors.usb.USBManager;
 
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 /**
@@ -183,7 +183,7 @@ public class ODKSensorManager {
 		driverTypes = allDrivers;
 	}
 	
-	public void parseDriverTableDefintionAndCreateTable(String sensorId, String appName, SQLiteDatabase db){
+	public void parseDriverTableDefintionAndCreateTable(WorkerThread worker, String appName, OdkDbHandle db, String sensorId) {
 		String strTableDef = null;
 		// Get the sensor information from the database
 		SensorData sensorDataFromDb;
@@ -224,13 +224,13 @@ public class ODKSensorManager {
  			}
  			
  			// Create the table for driver
- 			ODKDatabaseUtils.get().createOrOpenDBTableWithColumns(db, appName, tableId, columns);
+ 			
+ 			ColumnList cols = new ColumnList(columns);
+ 			worker.getDatabase().createOrOpenDBTableWithColumns(appName, db, tableId, cols);
      
         } catch (Exception e) {
         	e.printStackTrace();
         }
-	    
-	    db.close();
 	}
 
 	public DriverType getDriverType(String type) {

@@ -15,7 +15,6 @@
  */
 package org.opendatakit.sensors.manager;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -23,21 +22,27 @@ import org.json.JSONObject;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKJsonNames;
-import org.opendatakit.common.android.utilities.TableUtil;
+import org.opendatakit.database.DatabaseConsts;
+import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.service.OdkDbInterface;
 import org.opendatakit.sensors.DataSeries;
 import org.opendatakit.sensors.DriverType;
 import org.opendatakit.sensors.ODKSensor;
 
+import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.database.SQLException;
-import android.database.sqlite.SQLiteDatabase;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.os.RemoteException;
 import android.util.Log;
 
 /**
@@ -52,6 +57,92 @@ public class WorkerThread extends Thread {
   private boolean isRunning;
   private Context serviceContext;
   private ODKSensorManager sensorManager;
+  private ServiceConnectionWrapper databaseServiceConnection = null;
+  private OdkDbInterface databaseService = null;
+  
+  /**
+   * Wrapper class for service activation management.
+   * 
+   * @author mitchellsundt@gmail.com
+   *
+   */
+  private final class ServiceConnectionWrapper implements ServiceConnection {
+
+    @Override
+    public void onServiceConnected(ComponentName name, IBinder service) {
+      WorkerThread.this.doServiceConnected(name, service);
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName name) {
+      WorkerThread.this.doServiceDisconnected(name);
+    }
+  }
+  
+  private void unbindDatabaseBinderWrapper() {
+    try {
+      ServiceConnectionWrapper tmp = databaseServiceConnection;
+      databaseServiceConnection = null;
+      if ( tmp != null ) {
+        serviceContext.unbindService(tmp);
+      }
+    } catch ( Exception e ) {
+      // ignore
+      e.printStackTrace();
+    }
+  }
+  
+  private void shutdownServices() {
+    Log.i(TAG, "shutdownServices - Releasing WebServer and DbShim service");
+    databaseService = null;
+    unbindDatabaseBinderWrapper();
+  }
+  
+  private void bindToService() {
+    if (isRunning) {
+      if (databaseService == null && 
+          databaseServiceConnection == null) {
+        Log.i(TAG, "Attempting bind to Database service");
+        databaseServiceConnection = new ServiceConnectionWrapper();
+        Intent bind_intent = new Intent();
+        bind_intent.setClassName(DatabaseConsts.DATABASE_SERVICE_PACKAGE,
+            DatabaseConsts.DATABASE_SERVICE_CLASS);
+        serviceContext.bindService(
+            bind_intent,
+            databaseServiceConnection,
+            Context.BIND_AUTO_CREATE
+                | ((Build.VERSION.SDK_INT >= 14) ? Context.BIND_ADJUST_WITH_ACTIVITY : 0));
+      }
+    }
+  }
+  
+  private void doServiceConnected(ComponentName className, IBinder service) {
+
+    if (className.getClassName().equals(DatabaseConsts.DATABASE_SERVICE_CLASS)) {
+      Log.i(TAG, "Bound to Database service");
+      databaseService = OdkDbInterface.Stub.asInterface(service);
+    }
+  }
+
+  public OdkDbInterface getDatabase() {
+    return databaseService;
+  }
+
+  private void doServiceDisconnected(ComponentName className) {
+
+    if (className.getClassName().equals(DatabaseConsts.DATABASE_SERVICE_CLASS)) {
+      if (!isRunning) {
+        Log.i(TAG, "Unbound from Database service (intentionally)");
+      } else {
+        Log.w(TAG, "Unbound from Database service (unexpected)");
+      }
+      databaseService = null;
+      unbindDatabaseBinderWrapper();
+    }
+
+    // the bindToService() method decides whether to connect or not...
+    bindToService();
+  }
 
   public WorkerThread(Context context, ODKSensorManager manager) {
     super("WorkerThread");
@@ -70,16 +161,22 @@ public class WorkerThread extends Thread {
     Log.d(TAG, "worker thread started");
 
     while (isRunning) {
-      try {
-        for (ODKSensor sensor : sensorManager.getSensorsUsingAppForDatabase()) {
-          moveSensorDataToCP(sensor);
+      bindToService();
+  
+      while (isRunning && (getDatabase() != null)) {
+        try {
+          for (ODKSensor sensor : sensorManager.getSensorsUsingAppForDatabase()) {
+            moveSensorDataToCP(sensor);
+          }
+  
+          Thread.sleep(3000);
+        } catch (InterruptedException iex) {
+          iex.printStackTrace();
         }
-
-        Thread.sleep(3000);
-      } catch (InterruptedException iex) {
-        iex.printStackTrace();
       }
     }
+    
+    shutdownServices();
   }
 
   private void moveSensorDataToCP(ODKSensor aSensor) {
@@ -108,10 +205,10 @@ public class WorkerThread extends Thread {
     JSONObject jsonTableDef = null;
     ContentValues tablesValues = new ContentValues();
 
-    SQLiteDatabase db = null;
+    boolean insertSuccess = false;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(serviceContext,
-          aSensor.getAppNameForDatabase());
+      db = getDatabase().openDatabase(aSensor.getAppNameForDatabase(), true);
 
       jsonTableDef = new JSONObject(strTableDef);
 
@@ -126,19 +223,19 @@ public class WorkerThread extends Thread {
 
       success = false;
       try {
-        success = ODKDatabaseUtils.get().hasTableId(db, tableId);
+        success = getDatabase().hasTableId(aSensor.getAppNameForDatabase(), db, tableId);
       } catch (Exception e) {
         e.printStackTrace();
         throw new SQLException("Exception testing for tableId " + tableId);
       }
       if (!success) {
-        sensorManager.parseDriverTableDefintionAndCreateTable(aSensor.getSensorID(),
-            aSensor.getAppNameForDatabase(), db);
+        sensorManager.parseDriverTableDefintionAndCreateTable(this, 
+            aSensor.getAppNameForDatabase(), db, aSensor.getSensorID());
       }
 
       success = false;
       try {
-        success = ODKDatabaseUtils.get().hasTableId(db, tableId);
+        success = getDatabase().hasTableId(aSensor.getAppNameForDatabase(), db, tableId);
       } catch (Exception e) {
         e.printStackTrace();
         throw new SQLException("Exception testing for tableId " + tableId);
@@ -147,10 +244,10 @@ public class WorkerThread extends Thread {
         throw new SQLException("Unable to create tableId " + tableId);
       }
 
-      ArrayList<ColumnDefinition> orderedDefs = TableUtil.get().getColumnDefinitions(db, aSensor.getAppNameForDatabase(), tableId);
+      OrderedColumns orderedDefs = getDatabase().getUserDefinedColumns(aSensor.getAppNameForDatabase(), db, tableId);
 
       // Create the columns for the driver table
-      for (ColumnDefinition col : orderedDefs) {
+      for (ColumnDefinition col : orderedDefs.getColumnDefinitions()) {
         if (!col.isUnitOfRetention()) {
           continue;
         }
@@ -194,15 +291,20 @@ public class WorkerThread extends Thread {
         if (rowId == null) {
           rowId = ODKDataUtils.genUUID();
         }
-        ODKDatabaseUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedDefs,
+        getDatabase().insertDataIntoExistingDBTableWithId(aSensor.getAppNameForDatabase(), db, tableId, orderedDefs,
             tablesValues, rowId);
       }
+      insertSuccess = true;
 
     } catch (Exception e) {
       e.printStackTrace();
     } finally {
       if (db != null) {
-        db.close();
+        try {
+          getDatabase().closeTransactionAndDatabase(aSensor.getAppNameForDatabase(), db, insertSuccess);
+        } catch (RemoteException e) {
+          e.printStackTrace();
+        }
       }
     }
   }
