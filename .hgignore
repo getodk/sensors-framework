@@ -1,7 +1,13 @@
-
 syntax: regexp
 ^gen$
 syntax: regexp
 ^bin$
 syntax: regexp
 ^ODKSensors\.jar$
+syntax: glob
+build/**
+local.properties
+.idea/**
+.gradle/**
+*.iml
+
