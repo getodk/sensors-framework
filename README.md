@@ -2,7 +2,11 @@
 
 This project is __*actively maintained*__
 
-User documentation is [here](https://opendatakit.org/use/sensors/)
+User documentation (for an early standalone version of this software) is [here](https://opendatakit.org/use/sensors/)
+
+It is part of the ODK 2.0 Android tools suite.
+
+User documentation for each ODK 2.0 release is [under here](https://opendatakit.org/use/2_0_tools/)
 
 The Google group for user questions is: [opendatakit@](https://groups.google.com/forum/#!forum/opendatakit)
 
