@@ -1,0 +1,72 @@
+/**************************************************************************************************
+ GRADLE CONFIG
+ *************************************************************************************************/
+
+if ((new File(gradle.local)).exists()) { // TODO: This is very strange
+    def localPath = '../' + gradle.local // Shouldn't need to append ../ not consistent
+    apply from: localPath
+} else {
+    apply from: gradle.remote
+}
+
+applicationScripts.each {
+    apply from: it
+}
+
+apply plugin: 'com.android.application'
+
+android {
+    // The following are set in the common.gradle file
+    compileSdkVersion(compileVersion)
+    buildToolsVersion(buildTools)
+
+    defaultConfig {
+        applicationId(groupId + sensorsName)
+        minSdkVersion(minVersion)
+        targetSdkVersion(targetVersion)
+        versionCode(releaseVersionCode)
+        versionName(versionCodeName)
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled(minify)
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+        snapshot {
+            // Build type for snapshots
+        }
+        debug {
+            testCoverageEnabled(testCoverage) // Allows AndroidTest JaCoCo reports to be generated
+        }
+    }
+
+    packagingOptions { // Pick first occurrence of any files that cause conflicts, as defined in common.gradle
+        packageList.each {
+            pickFirst it
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(include: '*.jar', dir: 'libs')
+
+    if (libraryProjectPath.exists() && gradle.useLocal) { // Local project is favoured
+        compile project(libraryProjectName)
+    } else {
+        releaseCompile(group: groupId, name: libraryArtifactName, version: libraryRelease, ext: 'aar')
+        snapshotCompile(group: groupId, name: libraryArtifactName, version: librarySnapshot, ext: 'aar')
+        debugCompile(group: groupId, name: libraryArtifactName, version: librarySnapshot, ext: 'aar')
+        compile 'joda-time:joda-time:2.2'
+    }
+
+    if (commonProjectPath.exists() && gradle.useLocal) { // Local project is favoured
+        compile project(commonProjectName)
+    } else {
+        releaseCompile(group: groupId, name: commonArtifactName, version: commonRelease, ext: 'aar')
+        snapshotCompile(group: groupId, name: commonArtifactName, version: commonSnapshot, ext: 'aar')
+        debugCompile(group: groupId, name: commonArtifactName, version: commonSnapshot, ext: 'aar')
+    }
+
+    testCompile 'junit:junit:4.12'
+}
