@@ -12,7 +12,7 @@
  * the License.
  */
 
-package org.opendatakit.sensors.android;
+package org.opendatakit.sensors.test;
 
 import android.test.AndroidTestCase;
 
