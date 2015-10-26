@@ -208,7 +208,11 @@ public class WorkerThread extends Thread {
     boolean insertSuccess = false;
     OdkDbHandle db = null;
     try {
-      db = getDatabase().openDatabase(aSensor.getAppNameForDatabase(), true);
+      db = getDatabase().openDatabase(aSensor.getAppNameForDatabase());
+      // TODO: rework to reduce length of transaction. i.e., read the table
+      // configuration outside of the transaction.  Commit creating the table
+      // separately from inserting the data row into it.
+      getDatabase().beginTransaction(aSensor.getAppNameForDatabase(), db);
 
       jsonTableDef = new JSONObject(strTableDef);
 
