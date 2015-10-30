@@ -15,8 +15,17 @@
  */
 package org.opendatakit.sensors.manager;
 
-import java.util.Iterator;
-import java.util.List;
+import android.content.ComponentName;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.database.SQLException;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.IBinder;
+import android.os.RemoteException;
+import android.util.Log;
 
 import org.json.JSONObject;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
@@ -33,17 +42,8 @@ import org.opendatakit.sensors.DataSeries;
 import org.opendatakit.sensors.DriverType;
 import org.opendatakit.sensors.ODKSensor;
 
-import android.content.ComponentName;
-import android.content.ContentValues;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
-import android.database.SQLException;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.IBinder;
-import android.os.RemoteException;
-import android.util.Log;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * 
@@ -166,7 +166,7 @@ public class WorkerThread extends Thread {
       while (isRunning && (getDatabase() != null)) {
         try {
           for (ODKSensor sensor : sensorManager.getSensorsUsingAppForDatabase()) {
-            moveSensorDataToCP(sensor);
+            moveSensorDataToDB(sensor);
           }
   
           Thread.sleep(3000);
@@ -179,13 +179,11 @@ public class WorkerThread extends Thread {
     shutdownServices();
   }
 
-  private void moveSensorDataToCP(ODKSensor aSensor) {
+  private void moveSensorDataToDB(ODKSensor aSensor) {
     if (aSensor != null) {
       List<Bundle> bundles = aSensor.getSensorData(0);// XXX for now this gets
                                                       // all data fm sensor
-      if (bundles == null) {
-        Log.e(TAG, "WTF null list of bundles~");
-      } else {
+      if (bundles != null) {
         Iterator<Bundle> iter = bundles.iterator();
         while (iter.hasNext()) {
           Bundle aBundle = iter.next();
@@ -233,8 +231,7 @@ public class WorkerThread extends Thread {
         throw new SQLException("Exception testing for tableId " + tableId);
       }
       if (!success) {
-        sensorManager.parseDriverTableDefintionAndCreateTable(this, 
-            aSensor.getAppNameForDatabase(), db, aSensor.getSensorID());
+        sensorManager.parseDriverTableDefintionAndCreateTable(this, db, aSensor.getSensorID());
       }
 
       success = false;

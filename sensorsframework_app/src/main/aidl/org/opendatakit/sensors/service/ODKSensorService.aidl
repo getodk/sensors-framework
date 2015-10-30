@@ -29,8 +29,6 @@ interface ODKSensorService {
 	
 	boolean isBusy(in String id);
 	
-	boolean addSensor(in String id, String driverType, String commChannel);
-	
 	boolean hasSensor(in String id);
 	
 	void removeAllSensors();

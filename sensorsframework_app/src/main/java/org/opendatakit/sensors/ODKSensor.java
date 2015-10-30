@@ -15,11 +15,11 @@
  */
 package org.opendatakit.sensors;
 
-import java.util.List;
+import android.os.Bundle;
 
 import org.opendatakit.sensors.manager.SensorNotFoundException;
 
-import android.os.Bundle;
+import java.util.List;
 
 /**
  * 
@@ -29,7 +29,7 @@ import android.os.Bundle;
  */
 public interface ODKSensor {
 
-	public abstract void connect(String appForDatabase)
+	public abstract void connect()
 			throws SensorNotFoundException;
 
 	public abstract CommunicationChannelType getCommunicationChannelType();
@@ -39,7 +39,6 @@ public interface ODKSensor {
 	/**
 	 * Sends a message to the sensor to configure it.
 	 * @param setting TODO
-	 * @param configData Data for configuration.
 	 */
 	public abstract void configure(String setting, Bundle params)
 			throws ParameterMissingException;

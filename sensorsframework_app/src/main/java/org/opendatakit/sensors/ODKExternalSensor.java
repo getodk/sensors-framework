@@ -15,16 +15,16 @@
  */
 package org.opendatakit.sensors;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import android.os.Bundle;
+import android.util.Log;
 
 import org.opendatakit.sensors.manager.ChannelManager;
 import org.opendatakit.sensors.manager.SensorNotFoundException;
 
-import android.os.Bundle;
-import android.util.Log;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * 
@@ -47,14 +47,14 @@ public class ODKExternalSensor implements ODKSensor {
 
 	private byte [] remainingBytes;
 
-	public ODKExternalSensor(String sensorID, DriverCommunicator driverCom, ChannelManager channelMgr, String readingUiIntentStr, String configUiIntentStr) {
+	public ODKExternalSensor(String sensorID, String appName, DriverCommunicator driverCom, ChannelManager channelMgr, String readingUiIntentStr, String configUiIntentStr) {
 		this.sensorId = sensorID;
+		this.appNameForDatabase = appName;
 		this.sensorDriverCom = driverCom;
 		this.commChannelManager = channelMgr;
 		this.readingUiIntentStr = readingUiIntentStr;
 		this.configUiIntentStr = configUiIntentStr;
 
-		this.appNameForDatabase = null;
 		clientCounter = 0;
 		this.buffer = new ConcurrentLinkedQueue<SensorDataPacket>();
 	}
@@ -63,10 +63,9 @@ public class ODKExternalSensor implements ODKSensor {
 	 * @see org.opendatakit.sensors.ODKSensorInterface#connect(boolean)
 	 */
 	@Override
-	public void connect(String appForDatabase)
+	public void connect()
 			throws SensorNotFoundException {
 		try {
-			this.appNameForDatabase = appForDatabase;
 			commChannelManager.sensorConnect(sensorId);			
 		} catch (SensorNotFoundException snfe) {
 			snfe.printStackTrace();

@@ -15,19 +15,6 @@
  */
 package org.opendatakit.sensors.usb;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.opendatakit.sensors.CommunicationChannelType;
-import org.opendatakit.sensors.DriverType;
-import org.opendatakit.sensors.manager.AbstractChannelManagerBase;
-import org.opendatakit.sensors.manager.DetailedSensorState;
-import org.opendatakit.sensors.manager.DiscoverableDevice;
-import org.opendatakit.sensors.manager.SensorNotFoundException;
-
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -36,6 +23,19 @@ import android.content.IntentFilter;
 import android.hardware.usb.UsbManager;
 import android.util.Log;
 import android.widget.Toast;
+
+import org.opendatakit.sensors.CommunicationChannelType;
+import org.opendatakit.sensors.DriverType;
+import org.opendatakit.sensors.manager.AbstractChannelManagerBase;
+import org.opendatakit.sensors.manager.DetailedSensorState;
+import org.opendatakit.sensors.manager.DiscoverableDevice;
+import org.opendatakit.sensors.manager.SensorNotFoundException;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 //svn version 1145: switching to the Android 3.1+ (API level 12) way of interacting with the USB subsystem.   
@@ -129,9 +129,9 @@ public class USBManager extends AbstractChannelManagerBase {
 	 * 
 	 * @return True if sensor is successfully registered or has already been registered
 	 */
-	public boolean sensorRegister(String id_to_add, DriverType sensorType) {
+	public boolean sensorRegister(String id_to_add, DriverType sensorType, String appName) {
 		if(deviceAttached) {
-			return activeCommChannel.sensorRegister(id_to_add, sensorType);
+			return activeCommChannel.sensorRegister(id_to_add, sensorType, appName);
 		}
 		return false;
 	}
