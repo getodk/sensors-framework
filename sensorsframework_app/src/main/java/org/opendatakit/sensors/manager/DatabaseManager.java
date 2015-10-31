@@ -22,7 +22,6 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
-
 import org.opendatakit.sensors.CommunicationChannelType;
 import org.opendatakit.sensors.ServiceConstants;
 
@@ -30,360 +29,498 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 
  * @author wbrunette@gmail.com
  * @author rohitchaudhri@gmail.com
- * 
  */
 public class DatabaseManager {
 
-    // logging
-	private static final String LOGTAG = "SensorServiceDatabase";
+   // logging
+   private static final String LOGTAG = "SensorServiceDatabase";
 
-	// database metadata
-	private static final String DATABASE_NAME = "sensors.db";
-	private static final int DATABASE_VERSION = 4;
+   // database metadata
+   private static final String DATABASE_NAME = "sensors.db";
+   private static final int DATABASE_VERSION = 4;
 
-    // database helper
-	private DatabaseHelper mOpenHelper;
-	
-	/**
-	 * Sensor Table
-	 */
-	private class SensorTable {
-		// cannot instantiate class
-		private SensorTable() {
-		}
+   // database helper
+   private DatabaseHelper mOpenHelper;
 
-		public static final String TABLE_NAME = "sensor";
-		public static final String ID = "id"; // sensor id (primary key)
-		public static final String NAME = "name"; // sensor name
-		public static final String COMM_TYPE = "comm_type"; // communication type (Bluetooth, USB, etc.)
-		public static final String TYPE = "type"; // sensor type
-		public static final String STATE = "state"; // sensor state
-		public static final String APP_NAME = "app_name"; // the app name space the sensor readings should be stored
-	}
+   /**
+    * External Sensor Table
+    */
+   private class ExternalSensorTable {
+      // cannot instantiate class
+      private ExternalSensorTable() {
+      }
 
-	/**
-	 * Open, create, and upgrade the database file.
-	 */
-	private static class DatabaseHelper extends SQLiteOpenHelper {
+      public static final String TABLE_NAME = "externalsensors";
+      public static final String ID = "id"; // sensor id (primary key)
+      public static final String NAME = "name"; // sensor name
+      public static final String COMM_TYPE = "comm_type"; // communication type (Bluetooth, USB, etc.)
+      public static final String TYPE = "type"; // sensor type
+      public static final String STATE = "state"; // sensor state
+      public static final String APP_NAME = "app_name"; // the app name space the sensor readings should be stored
+   }
 
-		/**
-		 * Constructor
-		 * @param context application context
-		 */
-		DatabaseHelper(Context context) {
-			// initialize
-			super(context, DATABASE_NAME, null, DATABASE_VERSION);
-		}
+   /**
+    * Internal Sensor Table
+    */
+   private class InternalSensorTable {
+      // cannot instantiate class
+      private InternalSensorTable() {
+      }
 
-		/**
-		 * Called when database created for the first time
-		 */
-		@Override
-		public void onCreate(SQLiteDatabase db) {
-			Log.w(LOGTAG, "DatabaseHelper onCreate");
+      public static final String TABLE_NAME = "internalsensors";
+      public static final String ID = "id"; // sensor id (primary key)
+      public static final String APP_NAME = "app_name"; // the app name space the sensor readings should be stored
+   }
 
-			try {
-				// create sensor table
-				db.execSQL("CREATE TABLE " + SensorTable.TABLE_NAME + " (" + 
-						SensorTable.ID	+ " TEXT PRIMARY KEY," + 
-						SensorTable.NAME + " TEXT," + 
-						SensorTable.TYPE + " TEXT," + 
-						SensorTable.STATE + " TEXT," +
-						SensorTable.COMM_TYPE + " TEXT," +
-						SensorTable.APP_NAME + " TEXT"	+ ");");
-				
-			} catch (SQLException e) {
-				Log.w(LOGTAG, "DatabaseHelper onCreate Failed!");
-				Log.w(LOGTAG, e.getMessage());
-				Log.w(LOGTAG, Log.getStackTraceString(e));
-			}
-		}
+   /**
+    * Open, create, and upgrade the database file.
+    */
+   private static class DatabaseHelper extends SQLiteOpenHelper {
 
-		/**
-		 * Called when the database needs to be upgraded (version changed)
-		 */
-		@Override
-		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-			Log.w(LOGTAG, "DatabaseHelper onUpgrade: Upgrading database from version " + oldVersion
-					+ " to " + newVersion + ", which will destroy all old data");
+      /**
+       * Constructor
+       *
+       * @param context application context
+       */
+      DatabaseHelper(Context context) {
+         // initialize
+         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+      }
 
-			// drop tables (recordings first)
-			try {
-				db.execSQL("DROP TABLE IF EXISTS " + SensorTable.TABLE_NAME);
-			} catch (SQLException e) {
-				Log.w(LOGTAG, "DatabaseHelper onUpgrade Failed!");
-				Log.w(LOGTAG, e.getMessage());
-				Log.w(LOGTAG, Log.getStackTraceString(e));
-			}
+      /**
+       * Called when database created for the first time
+       */
+      @Override public void onCreate(SQLiteDatabase db) {
+         Log.w(LOGTAG, "DatabaseHelper onCreate");
 
-			// recreate tables
-			onCreate(db);
-		}
-	}
+         try {
+            // create sensor table
+            db.execSQL("CREATE TABLE " + ExternalSensorTable.TABLE_NAME + " (" +
+                ExternalSensorTable.ID + " TEXT PRIMARY KEY," +
+                ExternalSensorTable.NAME + " TEXT," +
+                ExternalSensorTable.TYPE + " TEXT," +
+                ExternalSensorTable.STATE + " TEXT," +
+                ExternalSensorTable.COMM_TYPE + " TEXT," +
+                ExternalSensorTable.APP_NAME + " TEXT" + ");");
 
-	/**
-	 * Constructor
-	 */
-	public DatabaseManager(Context context) {
-		// initialize database
-		mOpenHelper = new DatabaseHelper(context);
-	}
+            // create sensor table
+            db.execSQL("CREATE TABLE " + InternalSensorTable.TABLE_NAME + " (" +
+                InternalSensorTable.ID + " TEXT PRIMARY KEY," +
+                InternalSensorTable.APP_NAME + " TEXT" + ");");
 
-	
-	public synchronized void closeDb() {
-		mOpenHelper.close();
-	}
-	
-	// ---------------------------------------------------------------------------------------------
-	// SENSORS
-	// ---------------------------------------------------------------------------------------------
-
-    /**
-     * Add new sensor. Replaces any existing sensor with the same id.
-     * @param id sensor id
-     * @param name sensor name
-     * @param type sensor type
-     * @param state sensor state
-     * @param commType sensor communication type
-     *
-     */
-    public synchronized void sensorInsert(String id, String name, String type, DetailedSensorState state,
-                                          CommunicationChannelType commType, String appName) {
-        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
-
-        // store column values
-        ContentValues values = new ContentValues();
-        values.put(SensorTable.ID, id);
-        values.put(SensorTable.NAME, name);
-        values.put(SensorTable.TYPE, type);
-        values.put(SensorTable.STATE, state.name());
-        values.put(SensorTable.COMM_TYPE, commType.name());
-        values.put(SensorTable.APP_NAME, appName);
-
-        // insert (replace on conflicts)
-        try {
-            db.insertWithOnConflict(SensorTable.TABLE_NAME, null, values,
-                    SQLiteDatabase.CONFLICT_REPLACE);
-        } catch (SQLException e) {
+         } catch (SQLException e) {
+            Log.w(LOGTAG, "DatabaseHelper onCreate Failed!");
             Log.w(LOGTAG, e.getMessage());
             Log.w(LOGTAG, Log.getStackTraceString(e));
-        }
+         }
+      }
 
-    }
+      /**
+       * Called when the database needs to be upgraded (version changed)
+       */
+      @Override public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+         Log.w(LOGTAG,
+             "DatabaseHelper onUpgrade: Upgrading database from version " + oldVersion + " to "
+                 + newVersion + ", which will destroy all old data");
 
-	/**
-	 * Update existing sensor state
-	 * @param id sensor id
-	 * @param state sensor state
-	 */
-	public synchronized void sensorUpdateState(String id, DetailedSensorState state) {
-		SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+         // drop tables (recordings first)
+         try {
+            db.execSQL("DROP TABLE IF EXISTS " + ExternalSensorTable.TABLE_NAME);
+            db.execSQL("DROP TABLE IF EXISTS " + InternalSensorTable.TABLE_NAME);
+         } catch (SQLException e) {
+            Log.w(LOGTAG, "DatabaseHelper onUpgrade Failed!");
+            Log.w(LOGTAG, e.getMessage());
+            Log.w(LOGTAG, Log.getStackTraceString(e));
+         }
 
-		// store new column value
-		ContentValues values = new ContentValues();
-		values.put(SensorTable.STATE, state.name());
+         // recreate tables
+         onCreate(db);
+      }
+   }
 
-		String[] args = { id };
+   /**
+    * Constructor
+    */
+   public DatabaseManager(Context context) {
+      // initialize database
+      mOpenHelper = new DatabaseHelper(context);
+   }
 
-		db.update(SensorTable.TABLE_NAME, values, SensorTable.ID + "=?", args);
-	}
-	
-	/**
-	 * Update existing sensor name
-	 * @param id sensor id
-	 * @param name sensor name
-	 */
-	public synchronized void sensorUpdateName(String id, String name) {
-		SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+   public synchronized void closeDb() {
+      mOpenHelper.close();
+   }
 
-		// store new column value
+   // ---------------------------------------------------------------------------------------------
+   //  INTERNAL SENSORS
+   // ---------------------------------------------------------------------------------------------
 
-		ContentValues values = new ContentValues();
-		values.put(SensorTable.NAME, name);
+   /**
+    * Add new internal sensor. Replaces any existing sensor with the same id.
+    *
+    * @param id      sensor id
+    * @param appName db appname to store sensor data
+    */
+   public synchronized void insertInternalSensor(String id, String appName) {
+      SQLiteDatabase db = mOpenHelper.getWritableDatabase();
 
-		String[] args = { id };
+      // store column values
+      ContentValues values = new ContentValues();
+      values.put(InternalSensorTable.ID, id);
+      values.put(InternalSensorTable.APP_NAME, appName);
 
-		db.update(SensorTable.TABLE_NAME, values, SensorTable.ID + "=?", args);
-	}
+      // insert (replace on conflicts)
+      try {
+         db.insertWithOnConflict(InternalSensorTable.TABLE_NAME, null, values,
+             SQLiteDatabase.CONFLICT_REPLACE);
+      } catch (SQLException e) {
+         Log.w(LOGTAG, e.getMessage());
+         Log.w(LOGTAG, Log.getStackTraceString(e));
+      }
 
-	/**
-	 * Query existing sensor state
-	 * @param id sensor id
-	 * @return sensor state
-	 */
-	public synchronized DetailedSensorState sensorQuerySensorState(String id) {
-		SQLiteDatabase db = mOpenHelper.getReadableDatabase();
-		DetailedSensorState state = DetailedSensorState.DISCONNECTED;
-		
-		// query columns
-		String[] cols = { SensorTable.ID, SensorTable.STATE };
-		String[] args = { id };
-		
-		// run query
-		Cursor cursor = db.query(SensorTable.TABLE_NAME, cols, SensorTable.ID + "=?", args, null,
-				null, null);
-		
-		// return first state
-		if( cursor.getCount() > 0 ) {
-			cursor.moveToNext();
-			state = DetailedSensorState.valueOf( cursor.getString(1) );
-		}
-		
-		cursor.close();
-		return state;
-	}
+   }
 
-	/**
-	 * Query existing sensor type
-	 * @id sensor id
-	 * @return sensor type
-	 */
-	public synchronized String sensorQueryType(String id) {
-		SQLiteDatabase db = mOpenHelper.getReadableDatabase();
-		String type = ServiceConstants.UNKNOWN;
+   /**
+    * Check if internal sensor has metadata in db
+    *
+    * @param id sensor id
+    * @return tru if internal sensor has metadata in db, false otherwise
+    */
+   public synchronized boolean internalSensorMetadataInDb(String id) {
+      SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+      boolean result = false;
 
-		// query columns
-		String[] cols = { SensorTable.ID, SensorTable.TYPE };
-		String[] args = { id };
+      // query columns
+      String[] cols = { InternalSensorTable.ID };
+      String[] args = { id };
 
-		// run query
-		Cursor cursor = db.query(SensorTable.TABLE_NAME, cols, SensorTable.ID + "=?", args, null,
-				null, null);
+      // run query
+      Cursor cursor = db
+          .query(InternalSensorTable.TABLE_NAME, cols, InternalSensorTable.ID + "=?", args, null,
+              null, null);
 
-		// return first registration state
-		if (cursor.getCount() > 0) {
-			cursor.moveToNext();
-			type = cursor.getString(1);
-		}
+      // return first registration state
+      if (cursor.getCount() > 0) {
+         result = true;
+      }
 
-		cursor.close();
-		return type;
-	}
+      cursor.close();
+      return result;
+   }
 
-	/**
-	 * Query sensor name
-	 * @param id sensor id
-	 * @return sensor name
-	 */
-	public synchronized String sensorName(String id) {
-		SQLiteDatabase db = mOpenHelper.getReadableDatabase();
-		String name = "Unknown Name";
+   /**
+    * Query list of all internal sensors with metadata
+    *
+    * @return list of known sensor
+    */
+   public synchronized List<InternalSensorMetadata> internalSensorList() {
+      SQLiteDatabase db = mOpenHelper.getReadableDatabase();
 
-		// query columns
-		String[] cols = { SensorTable.ID, SensorTable.NAME };
-		String[] args = { id };
+      // query columns
+      String[] cols = { InternalSensorTable.ID, InternalSensorTable.APP_NAME };
 
-		// run query
-		Cursor cursor = db.query(SensorTable.TABLE_NAME, cols, SensorTable.ID + "=?", args, null,
-				null, null);
+      // run query
+      Cursor cursor = db.query(InternalSensorTable.TABLE_NAME, cols, null, null, null, null, null);
 
-		// return first registration state
-		if (cursor.getCount() > 0) {
-			cursor.moveToNext();
-			name = cursor.getString(1);
-		}
+      // parse results
+      ArrayList<InternalSensorMetadata> results = new ArrayList<InternalSensorMetadata>();
+      while (cursor.moveToNext()) {
+         InternalSensorMetadata data = new InternalSensorMetadata();
+         data.id = cursor.getString(0);
+         data.appName = cursor.getString(1);
+         results.add(data);
+      }
 
-		if (name == null)
-		{
-			name = "Unknown Name";
-		}
-		cursor.close();
-		return name;
-	}
+      cursor.close();
+      return results;
+   }
 
-	/**
-	 * Determines if a sensor is in the database.
-	 * @param id Sensor Id
-	 * @return True if sensor is in DB, false Otherwise
-	 */
-	public synchronized boolean sensorIsInDatabase( String id ) {
-	
-		if( sensorName(id).compareTo("Unknown Name") == 0 )
-			return false;
-		else
-			return true;
-	}
-	
-	/**
-	 * Query list of all available sensors
-	 * @return list of known sensor
-	 */
-	public synchronized SensorData getSensorDataForId( String sensorId ) {
-		SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+   /**
+    * Delete an internal sensor metadata
+    *
+    * @param id sensor id to delete
+    */
+   public synchronized void internalSensorDelete(String id) {
+      SQLiteDatabase db = mOpenHelper.getWritableDatabase();
 
-		// query columns
-		String[] cols = { SensorTable.ID, SensorTable.NAME, SensorTable.TYPE, SensorTable.STATE, SensorTable.APP_NAME};
-		String[] args = { sensorId };
-		
-		// run query
-		Cursor cursor = db.query(SensorTable.TABLE_NAME, cols, SensorTable.ID + "=?", args, null, null, null);
+      String[] args = { id };
 
-		// parse results
-		SensorData data = new SensorData();
-		while (cursor.moveToNext()) {
-			data.id = cursor.getString(0);
-			data.name = cursor.getString(1);
-			data.type = cursor.getString(2);
-			data.state = DetailedSensorState.valueOf(cursor.getString(3));
-            data.appName = cursor.getString(4);
-		}
+      db.delete(InternalSensorTable.TABLE_NAME, InternalSensorTable.ID + "=?", args);
+   }
 
-		cursor.close();
-		return data;
-	}
+   public synchronized void deleteAllInternalSensorsMetadata() {
+      for (InternalSensorMetadata sensor : internalSensorList()) {
+         internalSensorDelete(sensor.id);
+      }
 
-	/**
-	 * Query list of all available sensors
-	 * @return list of known sensor
-	 */
-	public synchronized List<SensorData> sensorList( CommunicationChannelType type ) {
-		SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+   }
 
-		// query columns
-		String[] cols = { SensorTable.ID, SensorTable.NAME, SensorTable.TYPE, SensorTable.STATE, SensorTable.APP_NAME};
-		String[] args = { type.name() };
-		
-		// run query
-		Cursor cursor = db.query(SensorTable.TABLE_NAME, cols, SensorTable.COMM_TYPE + "=?", args, null, null, null);
+   // ---------------------------------------------------------------------------------------------
+   //  EXTERNAL SENSORS
+   // ---------------------------------------------------------------------------------------------
 
-		// parse results
-		ArrayList<SensorData> results = new ArrayList<SensorData>();
-		while (cursor.moveToNext()) {
-			SensorData data = new SensorData();
-			data.id = cursor.getString(0);
-			data.name = cursor.getString(1);
-			data.type = cursor.getString(2);
-			data.state = DetailedSensorState.valueOf(cursor.getString(3));
-            data.appName = cursor.getString(4);
-			results.add(data);
-		}
+   /**
+    * Add new external sensor. Replaces any existing sensor with the same id.
+    *
+    * @param id       sensor id
+    * @param name     sensor name
+    * @param type     sensor type
+    * @param state    sensor state
+    * @param commType sensor communication type
+    * @param appName  db appname to store sensor data
+    */
+   public synchronized void insertExternalSensor(String id, String name, String type,
+       DetailedSensorState state, CommunicationChannelType commType, String appName) {
+      SQLiteDatabase db = mOpenHelper.getWritableDatabase();
 
-		cursor.close();
-		return results;
-	}
+      // store column values
+      ContentValues values = new ContentValues();
+      values.put(ExternalSensorTable.ID, id);
+      values.put(ExternalSensorTable.NAME, name);
+      values.put(ExternalSensorTable.TYPE, type);
+      values.put(ExternalSensorTable.STATE, state.name());
+      values.put(ExternalSensorTable.COMM_TYPE, commType.name());
+      values.put(ExternalSensorTable.APP_NAME, appName);
 
-	/**
-	 * Delete a sensor and associated recordings
-	 * @param id sensor id to delete
-	 */
-	public synchronized void sensorDelete(String id) {
-		SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+      // insert (replace on conflicts)
+      try {
+         db.insertWithOnConflict(ExternalSensorTable.TABLE_NAME, null, values,
+             SQLiteDatabase.CONFLICT_REPLACE);
+      } catch (SQLException e) {
+         Log.w(LOGTAG, e.getMessage());
+         Log.w(LOGTAG, Log.getStackTraceString(e));
+      }
 
-		String[] args = { id };
+   }
 
-		db.delete(SensorTable.TABLE_NAME, SensorTable.ID + "=?", args);
-	}
-	
-	
-	public synchronized void deleteAllSensors() {
-		for(CommunicationChannelType type : CommunicationChannelType.values()) {
-			for(SensorData sensor : sensorList(type)) {
-				sensorDelete(sensor.id);
-			}
-		}
-	}
-	
+   /**
+    * Update existing sensor state
+    *
+    * @param id    sensor id
+    * @param state sensor state
+    */
+   public synchronized void externalSensorUpdateState(String id, DetailedSensorState state) {
+      SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+
+      // store new column value
+      ContentValues values = new ContentValues();
+      values.put(ExternalSensorTable.STATE, state.name());
+
+      String[] args = { id };
+
+      db.update(ExternalSensorTable.TABLE_NAME, values, ExternalSensorTable.ID + "=?", args);
+   }
+
+   /**
+    * Update existing sensor name
+    *
+    * @param id   sensor id
+    * @param name sensor name
+    */
+   public synchronized void externalSensorUpdateName(String id, String name) {
+      SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+
+      // store new column value
+
+      ContentValues values = new ContentValues();
+      values.put(ExternalSensorTable.NAME, name);
+
+      String[] args = { id };
+
+      db.update(ExternalSensorTable.TABLE_NAME, values, ExternalSensorTable.ID + "=?", args);
+   }
+
+   /**
+    * Query existing sensor state
+    *
+    * @param id sensor id
+    * @return sensor state
+    */
+   public synchronized DetailedSensorState externalSensorQuerySensorState(String id) {
+      SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+      DetailedSensorState state = DetailedSensorState.DISCONNECTED;
+
+      // query columns
+      String[] cols = { ExternalSensorTable.ID, ExternalSensorTable.STATE };
+      String[] args = { id };
+
+      // run query
+      Cursor cursor = db
+          .query(ExternalSensorTable.TABLE_NAME, cols, ExternalSensorTable.ID + "=?", args, null,
+              null, null);
+
+      // return first state
+      if (cursor.getCount() > 0) {
+         cursor.moveToNext();
+         state = DetailedSensorState.valueOf(cursor.getString(1));
+      }
+
+      cursor.close();
+      return state;
+   }
+
+   /**
+    * Query existing sensor type
+    *
+    * @return sensor type
+    * @id sensor id
+    */
+   public synchronized String externalSensorQueryType(String id) {
+      SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+      String type = ServiceConstants.UNKNOWN;
+
+      // query columns
+      String[] cols = { ExternalSensorTable.ID, ExternalSensorTable.TYPE };
+      String[] args = { id };
+
+      // run query
+      Cursor cursor = db
+          .query(ExternalSensorTable.TABLE_NAME, cols, ExternalSensorTable.ID + "=?", args, null,
+              null, null);
+
+      // return first registration state
+      if (cursor.getCount() > 0) {
+         cursor.moveToNext();
+         type = cursor.getString(1);
+      }
+
+      cursor.close();
+      return type;
+   }
+
+   /**
+    * Query sensor name
+    *
+    * @param id sensor id
+    * @return sensor name
+    */
+   public synchronized String externalSensorName(String id) {
+      SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+      String name = "Unknown Name";
+
+      // query columns
+      String[] cols = { ExternalSensorTable.ID, ExternalSensorTable.NAME };
+      String[] args = { id };
+
+      // run query
+      Cursor cursor = db
+          .query(ExternalSensorTable.TABLE_NAME, cols, ExternalSensorTable.ID + "=?", args, null,
+              null, null);
+
+      // return first registration state
+      if (cursor.getCount() > 0) {
+         cursor.moveToNext();
+         name = cursor.getString(1);
+      }
+
+      if (name == null) {
+         name = "Unknown Name";
+      }
+      cursor.close();
+      return name;
+   }
+
+   /**
+    * Determines if a sensor is in the database.
+    *
+    * @param id Sensor Id
+    * @return True if sensor is in DB, false Otherwise
+    */
+   public synchronized boolean externalSensorIsInDatabase(String id) {
+
+      if (externalSensorName(id).compareTo("Unknown Name") == 0)
+         return false;
+      else
+         return true;
+   }
+
+   /**
+    * Query list of all available sensors
+    *
+    * @return list of known sensor
+    */
+   public synchronized ExternalSensorData getExternalSensorDataForId(String sensorId) {
+      SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+
+      // query columns
+      String[] cols = { ExternalSensorTable.ID, ExternalSensorTable.NAME, ExternalSensorTable.TYPE,
+          ExternalSensorTable.STATE, ExternalSensorTable.APP_NAME };
+      String[] args = { sensorId };
+
+      // run query
+      Cursor cursor = db
+          .query(ExternalSensorTable.TABLE_NAME, cols, ExternalSensorTable.ID + "=?", args, null,
+              null, null);
+
+      // parse results
+      ExternalSensorData data = new ExternalSensorData();
+      while (cursor.moveToNext()) {
+         data.id = cursor.getString(0);
+         data.name = cursor.getString(1);
+         data.type = cursor.getString(2);
+         data.state = DetailedSensorState.valueOf(cursor.getString(3));
+         data.appName = cursor.getString(4);
+      }
+
+      cursor.close();
+      return data;
+   }
+
+   /**
+    * Query list of all available external sensors by communication type
+    *
+    * @param type communication channel type
+    * @return list of known sensor
+    */
+   public synchronized List<ExternalSensorData> externalSensorList(CommunicationChannelType type) {
+      SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+
+      // query columns
+      String[] cols = { ExternalSensorTable.ID, ExternalSensorTable.NAME, ExternalSensorTable.TYPE,
+          ExternalSensorTable.STATE, ExternalSensorTable.APP_NAME };
+      String[] args = { type.name() };
+
+      // run query
+      Cursor cursor = db
+          .query(ExternalSensorTable.TABLE_NAME, cols, ExternalSensorTable.COMM_TYPE + "=?", args,
+              null, null, null);
+
+      // parse results
+      ArrayList<ExternalSensorData> results = new ArrayList<ExternalSensorData>();
+      while (cursor.moveToNext()) {
+         ExternalSensorData data = new ExternalSensorData();
+         data.id = cursor.getString(0);
+         data.name = cursor.getString(1);
+         data.type = cursor.getString(2);
+         data.state = DetailedSensorState.valueOf(cursor.getString(3));
+         data.appName = cursor.getString(4);
+         results.add(data);
+      }
+
+      cursor.close();
+      return results;
+   }
+
+   /**
+    * Delete an external sensor
+    *
+    * @param id sensor id to delete
+    */
+   public synchronized void externalSensorDelete(String id) {
+      SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+
+      String[] args = { id };
+
+      db.delete(ExternalSensorTable.TABLE_NAME, ExternalSensorTable.ID + "=?", args);
+   }
+
+   public synchronized void deleteAllExternalSensors() {
+      for (CommunicationChannelType type : CommunicationChannelType.values()) {
+         for (ExternalSensorData sensor : externalSensorList(type)) {
+            externalSensorDelete(sensor.id);
+         }
+      }
+   }
+
 }

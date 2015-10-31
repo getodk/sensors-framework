@@ -17,7 +17,6 @@ package org.opendatakit.sensors.tests;
 
 import android.content.Context;
 import android.util.Log;
-
 import org.opendatakit.sensors.CommunicationChannelType;
 import org.opendatakit.sensors.DriverType;
 import org.opendatakit.sensors.ODKSensor;
@@ -175,7 +174,7 @@ public class DummyManager extends AbstractChannelManagerBase {
 		// Cleanup All Of The Dummy Sensors
 		if (mSensorMap != null) {
 			for (String id : mSensorMap.keySet()) {
-				mDatabaseManager.sensorDelete(id);
+				 mDatabaseManager.externalSensorDelete(id);
 			}
 			
 			Collection<DummySensor> c = mSensorMap.values();

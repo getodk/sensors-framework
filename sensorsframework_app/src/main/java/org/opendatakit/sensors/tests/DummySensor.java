@@ -15,17 +15,16 @@
  */
 package org.opendatakit.sensors.tests;
 
-import java.io.BufferedWriter;
-import java.io.InputStream;
-import java.util.concurrent.atomic.AtomicBoolean;
-
+import android.util.Log;
 import org.opendatakit.sensors.ODKSensor;
 import org.opendatakit.sensors.SensorDataPacket;
 import org.opendatakit.sensors.ServiceConstants;
 import org.opendatakit.sensors.manager.DatabaseManager;
 import org.opendatakit.sensors.manager.DetailedSensorState;
 
-import android.util.Log;
+import java.io.BufferedWriter;
+import java.io.InputStream;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 
@@ -68,27 +67,28 @@ public class DummySensor extends Thread {
 	 * 
 	 * @param id
 	 *            Sensor ID
-	 * @param sensor
-	 *            TODO
-	 * @param rs
-	 *            Initial Registration State
-	 * @param con
-	 *            Application Context, For Intent Broadcasts
+   *
+   * @param dbm
+   * 						database manager
+   *
+   * @param sensor
+   *            TODO
 	 */
 	public DummySensor(String id, DatabaseManager dbm, ODKSensor sensor) {
 		mDbMan = dbm;
 		mId = id;
 		mSensor = sensor;
-		mDbMan.sensorUpdateState(id.toString(), DetailedSensorState.CONNECTED);
-	}
+     mDbMan.externalSensorUpdateState(id, DetailedSensorState.CONNECTED);
+  }
 
 	/**
 	 * Attempt Connection To Sensor
 	 */
 	public void connect() {
 		// query current state
-		DetailedSensorState ss = mDbMan.sensorQuerySensorState(mId.toString());
-		if (DEBUG) Log.d(LOGTAG, "In connect sensor");
+     DetailedSensorState ss = mDbMan.externalSensorQuerySensorState(mId);
+     if (DEBUG)
+        Log.d(LOGTAG, "In connect sensor");
 
 		if (ss == DetailedSensorState.CONNECTED) {
 			// update state to connecting
@@ -96,9 +96,9 @@ public class DummySensor extends Thread {
 		} else {
 			Log.e(LOGTAG, "Will Not Connect Unpaired || Unregistered Sensor "
 					+ mId);
-			mDbMan.sensorUpdateState(mId.toString(), DetailedSensorState.CONNECTED);
-			this.start();
-		}
+       mDbMan.externalSensorUpdateState(mId, DetailedSensorState.CONNECTED);
+       this.start();
+    }
 	}
 
 	/**
@@ -118,9 +118,9 @@ public class DummySensor extends Thread {
 	}
 
 	public void helperResetConnection() {
-		mDbMan.sensorUpdateState(mId.toString(), DetailedSensorState.DISCONNECTED);
-		mSensor.dataBufferReset();
-	}
+     mDbMan.externalSensorUpdateState(mId, DetailedSensorState.DISCONNECTED);
+     mSensor.dataBufferReset();
+  }
 
 	public void write(String data) {
 		Log.d(LOGTAG, "Dummy sensor write: " + data);

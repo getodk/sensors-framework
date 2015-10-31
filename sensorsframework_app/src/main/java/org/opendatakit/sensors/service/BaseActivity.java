@@ -18,11 +18,9 @@ package org.opendatakit.sensors.service;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.RemoteException;
-import android.util.Log;
+import org.opendatakit.sensors.ServiceConstants;
 
 import java.util.List;
 
@@ -31,229 +29,147 @@ import java.util.List;
  *
  * @author wbrunette@gmail.com
  * @author rohitchaudhri@gmail.com
- *
  */
-@SuppressLint("Registered")
-public class BaseActivity extends Activity {
-	private static final int MAX_RETRY = 3;
+@SuppressLint("Registered") public class BaseActivity extends Activity {
+   private static final int MAX_RETRY = 3;
 
-	private static final String MIDDLEWARE_PROXY_FAILED_MSG = "Middleware Proxy Failed";
+   private static final String MIDDLEWARE_PROXY_FAILED_MSG = "Middleware Proxy Failed";
 
-	private final static String TAG = "BaseActivity";
+   protected final static int SENSOR_DISCOVERY_RETURN = 42123;
 
-	protected final static int SENSOR_DISCOVERY_RETURN = 42123;
+   private SensorServiceProxy mwProxy;
 
-	private SensorServiceProxy mwProxy;
-	private Uri contentProviderUri;
+   /**
+    * Called when the activity is first created.
+    */
+   @Override protected void onCreate(Bundle savedInstanceState) {
+      super.onCreate(savedInstanceState);
 
-	private String columns[] = new String[] { "_id", "sensorid", "sensortype",
-			"data", "msgtype" };
+      mwProxy = new SensorServiceProxy(this);
+   }
 
-	protected static class SensorData {
-		public static String rowid, sensorID, sensorType, csvdata, messageType,
-				timestamp;
-	}
+   @Override protected void onDestroy() {
+      if (mwProxy != null) {
+         mwProxy.shutdown();
+      }
 
-	/** Called when the activity is first created. */
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
+      super.onDestroy();
+   }
 
-		mwProxy = new SensorServiceProxy(this);
-		contentProviderUri = Uri
-				.parse("content://org.opendatakit.sensorsV2.usbsensordataprovider/sensors");
+   private boolean verifyConnection() {
+      // verify a good connections, else retry MAX_RETRY times to establish connection
+      for (int retry = 0; retry < MAX_RETRY; retry++) {
+         if (mwProxy == null) {
+            mwProxy = new SensorServiceProxy(this);
+            try {
+               Thread.sleep(3000);
+            } catch (InterruptedException e) {
+               // don't really care, just gives time for system to rebind
+            }
+         }
 
-	}
+         if (mwProxy.isBoundToService()) {
+            return true;
+         } else {
+            mwProxy = null; // cause connection to be restablished
+         }
 
-	@Override
-	protected void onDestroy() {
-		if (mwProxy != null) {
-			mwProxy.shutdown();
-		}
+      }
+      return false;
+   }
 
-		super.onDestroy();
-	}
+   protected void sensorConnect(String id, String appForDatabase) throws RemoteException {
+      if (verifyConnection()) {
+         mwProxy.sensorConnect(id, appForDatabase);
+         return;
+      }
+      throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
+   }
 
-	private boolean verifyConnection()  {
-		// verify a good connections, else retry MAX_RETRY times to establish connection
-		for (int retry = 0; retry < MAX_RETRY; retry++) {
-			if (mwProxy == null) {
-				mwProxy = new SensorServiceProxy(this);
-				try {
-					Thread.sleep(3000);
-				} catch (InterruptedException e) {
-					// don't really care, just gives time for system to rebind
-				}
-			}
+   protected boolean startSensor(String id) throws RemoteException {
+      if (verifyConnection()) {
+         return mwProxy.startSensor(id);
+      }
+      throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
+   }
 
-			if (mwProxy.isBoundToService()) {
-				return true;
-			} else {
-				mwProxy = null; // cause connection to be restablished
-			}
+   protected boolean stopSensor(String id) throws RemoteException {
+      if (verifyConnection()) {
+         return mwProxy.stopSensor(id);
+      }
+      throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
+   }
 
-		}
-		return false;
-	}
+   protected void configure(String id, String setting, Bundle params) throws RemoteException {
+      if (verifyConnection()) {
+         mwProxy.configure(id, setting, params);
+         return;
+      }
+      throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
+   }
 
-	protected void sensorConnect(String id, String appForDatabase)
-			throws RemoteException {
-		if (verifyConnection()) {
-			mwProxy.sensorConnect(id, appForDatabase);
-			return;
-		}
-		throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
-	}
+   protected List<Bundle> getSensorData(String id, long maxNumReadings) throws RemoteException {
+      if (verifyConnection()) {
+         return mwProxy.getSensorData(id, maxNumReadings);
+      }
+      throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
+   }
 
-	protected boolean startSensor(String id) throws RemoteException {
-		if (verifyConnection()) {
-			return mwProxy.startSensor(id);
-		}
-		throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
-	}
+   protected void sendDataToSensor(String id, Bundle dataToSend) throws RemoteException {
+      if (verifyConnection()) {
+         mwProxy.sendDataToSensor(id, dataToSend);
+         return;
+      }
+      throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
+   }
 
-	protected boolean stopSensor(String id) throws RemoteException {
-		if (verifyConnection()) {
-			return mwProxy.stopSensor(id);
-		}
-		throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
-	}
+   protected boolean isConnected(String id) throws RemoteException {
+      if (verifyConnection()) {
+         return mwProxy.isConnected(id);
+      }
+      throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
+   }
 
-	protected void configure(String id, String setting, Bundle params)
-			throws RemoteException {
-		if (verifyConnection()) {
-			mwProxy.configure(id, setting, params);
-			return;
-		}
-		throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
-	}
+   protected boolean isBusy(String id) throws RemoteException {
+      if (verifyConnection()) {
+         return mwProxy.isBusy(id);
+      }
+      throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
+   }
 
-	protected List<Bundle> getSensorData(String id, long maxNumReadings)
-			throws RemoteException {
-		if (verifyConnection()) {
-			return mwProxy.getSensorData(id, maxNumReadings);
-		}
-		throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
-	}
+   protected boolean hasSensor(String id) throws RemoteException {
+      if (verifyConnection()) {
+         return mwProxy.hasSensor(id);
+      }
+      throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
+   }
 
-	protected void sendDataToSensor(String id, Bundle dataToSend) throws RemoteException {
-		if (verifyConnection()) {
-			mwProxy.sendDataToSensor(id, dataToSend);
-			return;
-		}
-		throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
-	}
+   protected void removeAllSensors() throws RemoteException {
+      if (verifyConnection()) {
+         mwProxy.removeAllSensors();
+         return;
+      }
+      throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
+   }
 
-	protected boolean isConnected(String id) throws RemoteException {
-		if (verifyConnection()) {
-			return mwProxy.isConnected(id);
-		}
-		throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
-	}
+   protected void launchSensorDiscovery(String appName) {
+      Intent i = new Intent();
+      i.setClassName("org.opendatakit.sensors",
+          "org.opendatakit.sensors.ui.activity.AddSensorActivity");
+      i.putExtra(ServiceConstants.APP_NAME_KEY, appName);
+      startActivityForResult(i, SENSOR_DISCOVERY_RETURN);
+   }
 
-	protected boolean isBusy(String id) throws RemoteException {
-		if (verifyConnection()) {
-			return mwProxy.isBusy(id);
-		}
-		throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
-	}
+   protected void configureUsbBridgeSendRate(String id, int sendRate) throws RemoteException {
+      Bundle params = new Bundle();
+      params.putInt("SR", sendRate);
+      configure(id, "SR", params);
+   }
 
-	protected boolean hasSensor(String id) throws RemoteException {
-		if (verifyConnection()) {
-			return mwProxy.hasSensor(id);
-		}
-		throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
-	}
+   protected void configureUsbBridgeReadRate(String id, int readRate) throws RemoteException {
+      Bundle params = new Bundle();
+      params.putInt("RR", readRate);
+      configure(id, "RR", params);
+   }
 
-	protected void removeAllSensors() throws RemoteException {
-		if (verifyConnection()) {
-			mwProxy.removeAllSensors();
-			return;
-		}
-		throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
-	}
-
-	protected void launchSensorDiscovery() {
-		Intent i = new Intent();
-		i.setClassName("org.opendatakit.sensors",
-				"org.opendatakit.sensors.ui.activity.AddSensorActivity");
-		startActivityForResult(i, SENSOR_DISCOVERY_RETURN);
-	}
-
-	protected void configureUsbBridgeSendRate(String id, int sendRate) throws RemoteException {
-		Bundle params = new Bundle();
-		params.putInt("SR", sendRate);
-		configure(id, "SR", params);
-	}
-
-	protected void configureUsbBridgeReadRate(String id, int readRate) throws RemoteException {
-		Bundle params = new Bundle();
-		params.putInt("RR", readRate);
-		configure(id, "RR", params);
-	}
-
-	protected String getAllRecords() {
-		String toReturn = null;
-		Cursor cur = managedQuery(contentProviderUri, columns, null, null, null);
-		if (cur.moveToFirst()) {
-			do {
-				SensorData.rowid = cur.getString(cur.getColumnIndex("_id"));
-				SensorData.sensorID = cur.getString(cur
-						.getColumnIndex("sensorid"));
-				SensorData.sensorType = cur.getString(cur
-						.getColumnIndex("sensortype"));
-				SensorData.csvdata += cur.getString(cur.getColumnIndex("data"))
-						+ ",";
-				SensorData.messageType = cur.getString(cur
-						.getColumnIndex("msgtype"));
-
-			} while (cur.moveToNext());
-		}
-		this.stopManagingCursor(cur);
-		cur.close();
-		toReturn = SensorData.csvdata;
-		return toReturn;
-	}
-
-	protected String getLastRecords() {
-		int selectedSensorMode = 1;
-
-		String toReturn = null;
-		String[] maxIDColumn = new String[] { "MAX(_id)" };
-		Cursor curForMaxID = managedQuery(contentProviderUri, maxIDColumn,
-				"sensorid=" + selectedSensorMode, null, null);
-		String maxID = "1";
-		if (curForMaxID.moveToFirst())
-			;
-		{
-			maxID = curForMaxID.getString(curForMaxID
-					.getColumnIndex("MAX(_id)"));
-		}
-
-		Log.d(TAG, " querying for SID:" + selectedSensorMode + " max id: "
-				+ maxID);
-		Cursor cur = managedQuery(contentProviderUri, columns, "_ID=" + maxID,
-				null, null);
-		if (cur.moveToFirst()) {
-			do {
-				SensorData.rowid = cur.getString(cur.getColumnIndex("_id"));
-				SensorData.sensorID = cur.getString(cur
-						.getColumnIndex("sensorid"));
-				SensorData.sensorType = cur.getString(cur
-						.getColumnIndex("sensortype"));
-				SensorData.csvdata = cur.getString(cur.getColumnIndex("data"));
-				SensorData.messageType = cur.getString(cur
-						.getColumnIndex("msgtype"));
-				toReturn = SensorData.rowid + "," + SensorData.sensorID + ","
-						+ SensorData.sensorType + "," + SensorData.csvdata
-						+ "," + SensorData.messageType;
-				Log.d(TAG, toReturn);
-			} while (cur.moveToNext());
-		}
-		curForMaxID.close();
-		cur.close();
-		this.stopManagingCursor(cur);
-		this.stopManagingCursor(curForMaxID);
-		return toReturn;
-	}
 }

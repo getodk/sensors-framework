@@ -24,7 +24,7 @@ package org.opendatakit.sensors.manager;
  * @author rohitchaudhri@gmail.com
  * 
  */
-public class SensorData {
+public class ExternalSensorData {
 	public String id;
 	public String name;
 	public String type;

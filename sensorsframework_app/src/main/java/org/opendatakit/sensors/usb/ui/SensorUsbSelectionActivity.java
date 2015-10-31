@@ -18,30 +18,15 @@ package org.opendatakit.sensors.usb.ui;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.IntentFilter;
+import android.content.*;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.AdapterView;
+import android.widget.*;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.ListView;
-import android.widget.Spinner;
-
-import org.opendatakit.sensors.CommunicationChannelType;
-import org.opendatakit.sensors.Constants;
-import org.opendatakit.sensors.DriverType;
-import org.opendatakit.sensors.R;
-import org.opendatakit.sensors.SensorDriverDiscovery;
-import org.opendatakit.sensors.SensorsSingleton;
-import org.opendatakit.sensors.ServiceConstants;
+import org.opendatakit.sensors.*;
 import org.opendatakit.sensors.drivers.ManifestMetadata;
 import org.opendatakit.sensors.exception.IdNotFoundException;
 import org.opendatakit.sensors.manager.DiscoverableDevice;
@@ -54,306 +39,300 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 
  * @author wbrunette@gmail.com
  * @author rohitchaudhri@gmail.com
- * 
  */
 public class SensorUsbSelectionActivity extends Activity {
 
-	// logging
-	private static final String LOGTAG = SensorUsbSelectionActivity.class.getSimpleName();
-	private static final boolean LOGENABLED = true;
+   // logging
+   private static final String LOGTAG = SensorUsbSelectionActivity.class.getSimpleName();
+   private static final boolean LOGENABLED = true;
 
-	private static final String M_SENSOR_ITEMS = "mSensorItems";
+   private static final String M_SENSOR_ITEMS = "mSensorItems";
 
-	// UI objects
-	private List<ISensorSelectorItem> mSensorItems = new ArrayList<ISensorSelectorItem>();
-	private ListView mSensorList;
-	private SensorsAdapter mSensorsAdapter;
-	
-	private String mProgressId = "";
-	private ProgressDialog mRegisterProgress = null;
-	
-	private View metadialogView;
-	
-	private USBManager usbManager;
-	private int mMetaDialogPosition = 0;
-	
-	/**
-	 * Called when activity is first created
-	 */
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);		
-		
-		mSensorsAdapter = new SensorsAdapter(getApplicationContext(),
-				mSensorItems);
-		
-		setContentView(R.layout.usb_sensor_selection);
-		
-		mSensorList = (ListView) findViewById(R.id.lvSensors);
-		
-		mSensorList.setAdapter(mSensorsAdapter);
-		mSensorList.setClickable(true);
-		mSensorList.setOnItemClickListener(mItemClickListener);
+   // UI objects
+   private List<ISensorSelectorItem> mSensorItems = new ArrayList<ISensorSelectorItem>();
+   private ListView mSensorList;
+   private SensorsAdapter mSensorsAdapter;
 
-		// buttons
-		Button mHelpButton = (Button) findViewById(R.id.help_button);
-		mHelpButton.setOnClickListener(mHelpButtonListener);
-		
-		getApplicationContext().registerReceiver(mSensorStateChangeReceiver,
-				new IntentFilter(ServiceConstants.USB_STATE_CHANGE));
-		
-		usbManager = SensorsSingleton.getUSBManager();
-		updateSensorList();
-	}
+   private String mProgressId = "";
+   private ProgressDialog mRegisterProgress = null;
 
-	/**
-	 * Cleanup activity
-	 */
-	@Override
-	public void onDestroy() {
-		if (LOGENABLED)
-			Log.w(LOGTAG, "onDestroy");
-		
-		getApplicationContext().unregisterReceiver(mSensorStateChangeReceiver);		
-		super.onDestroy();
-	}
-	
-	@Override
-	protected void onSaveInstanceState(Bundle outState) {
-		if (LOGENABLED)
-			Log.w(LOGTAG, "onSaveInstanceState");
+   private View metadialogView;
 
-		// Save SensorItems To Bundle -- SensorItems Is Parelable
-		outState.putParcelableArrayList(M_SENSOR_ITEMS,
-				(ArrayList<? extends Parcelable>) mSensorItems);
-		super.onSaveInstanceState(outState);
-	}
+   private USBManager usbManager;
+   private int mMetaDialogPosition = 0;
 
-	/**
-	 * Restore UI State
-	 * 
-	 * @param savedInstanceState
-	 *            bundle to restore state from
-	 */
-	@Override
-	protected void onRestoreInstanceState(Bundle savedInstanceState) {
-		if (LOGENABLED)
-			Log.w(LOGTAG, "onRestoreInstanceState");
+   private String appName;
 
-		// Restore UI State From Bundle -- Contains Array List Of SensorItems
-		mSensorItems = savedInstanceState
-				.getParcelableArrayList(M_SENSOR_ITEMS);
-		mSensorsAdapter = new SensorsAdapter(this, mSensorItems);
-		mSensorList.setAdapter(mSensorsAdapter);
-		mSensorsAdapter.notifyDataSetChanged();
-		super.onRestoreInstanceState(savedInstanceState);
-	}
-	
-	
-	/**
-	 * Help button listener
-	 */
-	private Button.OnClickListener mHelpButtonListener = new Button.OnClickListener() {
-		public void onClick(View v) {
-			// start help activity
-			Intent hi = new Intent(getApplicationContext(),
-					SensorUsbSelectionHelpActivity.class);
-			startActivityForResult(hi, 0);
-		}
-	};
-	
-	/**
-	 * Handles A Metadata Dialog Update
-	 */
-	private final android.content.DialogInterface.OnClickListener mMetaDiagListener = new DialogInterface.OnClickListener() {
+   /**
+    * Called when activity is first created
+    */
+   @Override public void onCreate(Bundle savedInstanceState) {
+      super.onCreate(savedInstanceState);
 
-		public void onClick(DialogInterface dialog, int whichButton) {
+      Intent intent = getIntent();
+      String tmpAppName = intent.getStringExtra(ServiceConstants.APP_NAME_KEY);
+      if (tmpAppName == null) {
+         // TODO: change to get the default from preferences instead of hardcode
+         appName = ServiceConstants.DEFAULT_APP_NAME;
+      } else {
+         appName = tmpAppName;
+      }
 
-			Log.d(LOGTAG,"A driver selected from the spinner");
-			// Lookup Views And Selector Item
-			Spinner spinner = getMetaDialogSpinner(metadialogView);
+      mSensorsAdapter = new SensorsAdapter(getApplicationContext(), mSensorItems);
 
-			ISensorSelectorItem si = (ISensorSelectorItem) mSensorsAdapter
-					.getItem(mMetaDialogPosition);
+      setContentView(R.layout.usb_sensor_selection);
 
-			DriverType driver = (DriverType) spinner.getSelectedItem();
+      mSensorList = (ListView) findViewById(R.id.lvSensors);
 
-			switch (whichButton) {
+      mSensorList.setAdapter(mSensorsAdapter);
+      mSensorList.setClickable(true);
+      mSensorList.setOnItemClickListener(mItemClickListener);
 
-			// On Positive Set The Text W/ The ListItem
-			case DialogInterface.BUTTON_POSITIVE:
-				showRegistrationProgress(si.getSensorId(), driver.getSensorType());
-				usbManager.sensorRegister(si.getSensorId(), driver, ServiceConstants.DEFAULT_APP_NAME);
+      // buttons
+      Button mHelpButton = (Button) findViewById(R.id.help_button);
+      mHelpButton.setOnClickListener(mHelpButtonListener);
 
-				// Just Leave On Cancel
-			default:
-				dialog.cancel();
-				break;
-			}
-		}
-	};
-	
-	/**
-	 * Handles sensor list short clicks
-	 */
-	private OnItemClickListener mItemClickListener = new AdapterView.OnItemClickListener() {
-		public void onItemClick(AdapterView<?> parentView, View view,
-				int position, long id) {
+      getApplicationContext().registerReceiver(mSensorStateChangeReceiver,
+          new IntentFilter(ServiceConstants.USB_STATE_CHANGE));
 
-			
-			// Sensor Ready: Display The Data View Activity For Sensor
-			if (mSensorsAdapter.sensorIsReady(position)) {
-				// Set result and finish this Activity
-				// Application decides how to proceed based on SENSOR_STATE
-				Log.d(LOGTAG, "Sensor is ready and connected");
-				String sensorId = mSensorsAdapter.getId(position);
-	            Intent intent = new Intent();
-	            intent.putExtra(Constants.SENSOR_ID, sensorId);
-	            setResult(RESULT_OK, intent);
-	            finish();
-			}
+      usbManager = SensorsSingleton.getUSBManager();
+      updateSensorList();
+   }
 
-			// Sensor Unregistered: Register Sensor
-			else {
-				Log.d(LOGTAG, "Sensor is unregistered");
-				showMetaDataDialog(position);
-			}						
-		}
-	};
-	
-	
-	/**
-	 * Show sensor registration progress dialog
-	 * 
-	 * @param id
-	 *            sensor id
-	 * @param name
-	 *            sensor name
-	 */
-	private void showRegistrationProgress(String id, String name) {
-		mRegisterProgress = ProgressDialog.show(this, "",
-				"Registering Sensor: " + name + ", Please wait...", true);
-		mProgressId = id;
-	}
+   /**
+    * Cleanup activity
+    */
+   @Override public void onDestroy() {
+      if (LOGENABLED)
+         Log.w(LOGTAG, "onDestroy");
 
-	/**
-	 * Save UI State
-	 *
-	 */
+      getApplicationContext().unregisterReceiver(mSensorStateChangeReceiver);
+      super.onDestroy();
+   }
 
-	private ISensorSelectorItem createSensorSelectorItem(String id, DiscoverableDeviceState sState, String name) {
-		return new SensorUsbSelectorItem(id, sState, name);
-	}
+   @Override protected void onSaveInstanceState(Bundle outState) {
+      if (LOGENABLED)
+         Log.w(LOGTAG, "onSaveInstanceState");
 
-	private View getMetaDialog() {
-		LayoutInflater factory = LayoutInflater.from(this);
-		return factory.inflate(R.layout.metadata_dialog, null);
-	}
+      // Save SensorItems To Bundle -- SensorItems Is Parelable
+      outState
+          .putParcelableArrayList(M_SENSOR_ITEMS, (ArrayList<? extends Parcelable>) mSensorItems);
+      super.onSaveInstanceState(outState);
+   }
 
-	private Spinner getMetaDialogSpinner(View metaDialog) {
-		return (Spinner) metaDialog.findViewById(R.id.sensor_type_spinner);
-	}
+   /**
+    * Restore UI State
+    *
+    * @param savedInstanceState bundle to restore state from
+    */
+   @Override protected void onRestoreInstanceState(Bundle savedInstanceState) {
+      if (LOGENABLED)
+         Log.w(LOGTAG, "onRestoreInstanceState");
 
-	private List<DriverType> getDrivers() {
-		return SensorDriverDiscovery
-				.getAllDriversForChannel(this, CommunicationChannelType.USB, ManifestMetadata.FRAMEWORK_VERSION_2);
-	}
+      // Restore UI State From Bundle -- Contains Array List Of SensorItems
+      mSensorItems = savedInstanceState.getParcelableArrayList(M_SENSOR_ITEMS);
+      mSensorsAdapter = new SensorsAdapter(this, mSensorItems);
+      mSensorList.setAdapter(mSensorsAdapter);
+      mSensorsAdapter.notifyDataSetChanged();
+      super.onRestoreInstanceState(savedInstanceState);
+   }
 
-	/**
-	 * Updates The Sensor List -- Calls Service To Determine List And Updates
-	 */
-	private void updateSensorList() {
-		Log.d(LOGTAG,"entered uodateSensorList");
-		if (usbManager != null) {
-			Log.d(LOGTAG,"calling usbManager.getDiscSensors()");
-			// request sensor list from service
-			List<DiscoverableDevice> sensorList = usbManager.getDiscoverableSensor();
-			if(sensorList != null) {
-				// load sensor list into list adapter
-				for (DiscoverableDevice device : sensorList) {
-					String id = device.getDeviceId();
-					DiscoverableDeviceState state = device.getDeviceState();
-					Log.d(LOGTAG,"Id: "+id+"  state: "+state);
-					String name = device.getDeviceName();
+   /**
+    * Help button listener
+    */
+   private Button.OnClickListener mHelpButtonListener = new Button.OnClickListener() {
+      public void onClick(View v) {
+         // start help activity
+         Intent hi = new Intent(getApplicationContext(), SensorUsbSelectionHelpActivity.class);
+         startActivityForResult(hi, 0);
+      }
+   };
 
-					try {
-						mSensorsAdapter.sensorStateChange(id, state, name);
-					} catch (IdNotFoundException e) {
-						ISensorSelectorItem sensor = createSensorSelectorItem(id, state, name);
-						mSensorsAdapter.addSensor(sensor);
-					}
-					mSensorsAdapter.notifyDataSetChanged();
+   /**
+    * Handles A Metadata Dialog Update
+    */
+   private final android.content.DialogInterface.OnClickListener mMetaDiagListener = new DialogInterface.OnClickListener() {
 
-					if (id.compareTo(mProgressId) == 0) {
-						if (mRegisterProgress != null) {
-							mRegisterProgress.dismiss();
-						}
-					}
-				}
-			}
-		}
+      public void onClick(DialogInterface dialog, int whichButton) {
 
-	}
-	
-	/**
-	 * Handles State Change Intents From Sensors, Passes MSG To UI Thread
-	 */
-	private final BroadcastReceiver mSensorStateChangeReceiver = new BroadcastReceiver() {
+         Log.d(LOGTAG, "A driver selected from the spinner");
+         // Lookup Views And Selector Item
+         Spinner spinner = getMetaDialogSpinner(metadialogView);
 
-		public void onReceive(Context context, Intent intent) {
-			
-			Log.d(LOGTAG, "Got state change event");
-			updateSensorList();
-		}
-	};		
-	
-	/**
-	 * Displays The MetaDataEditor Dialog
-	 * 
-	 * @param position
-	 *            Position Of The Item That Was Clicked
-	 */
-	private void showMetaDataDialog(int position) {
+         ISensorSelectorItem si = (ISensorSelectorItem) mSensorsAdapter
+             .getItem(mMetaDialogPosition);
 
-		// Setup Dialog
-		final AlertDialog.Builder alert = new AlertDialog.Builder(this);
-		
-		if (metadialogView == null)
-			metadialogView = getMetaDialog();
+         DriverType driver = (DriverType) spinner.getSelectedItem();
 
-		// Set Text To Existing Values
-		alert.setView(metadialogView);
+         switch (whichButton) {
 
-		// Save Off Position For Click Handling
-		mMetaDialogPosition = position;
+         // On Positive Set The Text W/ The ListItem
+         case DialogInterface.BUTTON_POSITIVE:
+            showRegistrationProgress(si.getSensorId(), driver.getSensorType());
+            usbManager.sensorRegister(si.getSensorId(), driver, appName);
 
-		List<DriverType> drivers = getDrivers();
-		
-		for(DriverType driver: drivers) {
-			Log.d(LOGTAG,"driver type: " + driver.getSensorType() + " address: " + driver.getSensorDriverAddress());
-		}
-		
-		ArrayAdapter<DriverType> adapter = new ArrayAdapter<DriverType>(this,
-				android.R.layout.simple_spinner_item, drivers);
-		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            // Just Leave On Cancel
+         default:
+            dialog.cancel();
+            break;
+         }
+      }
+   };
 
+   /**
+    * Handles sensor list short clicks
+    */
+   private OnItemClickListener mItemClickListener = new AdapterView.OnItemClickListener() {
+      public void onItemClick(AdapterView<?> parentView, View view, int position, long id) {
 
-		//Log.d(LOGTAG,adapter.getCount()+"");
-		
-		Spinner spinner = (Spinner)  getMetaDialogSpinner(metadialogView);
-		if (spinner == null) {
-			Log.w(LOGTAG, "Spinner is null");
-		}
-		spinner.setAdapter(adapter);
-		Log.d(LOGTAG,spinner.getCount()+"");		
-		
-		// Positive Button & Negative Button & Handler
-		alert.setPositiveButton("Select", mMetaDiagListener);
-		alert.setNegativeButton("Cancel", mMetaDiagListener);
-		alert.show();
-	}
-	
+         // Sensor Ready: Display The Data View Activity For Sensor
+         if (mSensorsAdapter.sensorIsReady(position)) {
+            // Set result and finish this Activity
+            // Application decides how to proceed based on SENSOR_STATE
+            Log.d(LOGTAG, "Sensor is ready and connected");
+            String sensorId = mSensorsAdapter.getId(position);
+            Intent intent = new Intent();
+            intent.putExtra(Constants.SENSOR_ID, sensorId);
+            setResult(RESULT_OK, intent);
+            finish();
+         }
+
+         // Sensor Unregistered: Register Sensor
+         else {
+            Log.d(LOGTAG, "Sensor is unregistered");
+            showMetaDataDialog(position);
+         }
+      }
+   };
+
+   /**
+    * Show sensor registration progress dialog
+    *
+    * @param id   sensor id
+    * @param name sensor name
+    */
+   private void showRegistrationProgress(String id, String name) {
+      mRegisterProgress = ProgressDialog
+          .show(this, "", "Registering Sensor: " + name + ", Please wait...", true);
+      mProgressId = id;
+   }
+
+   /**
+    * Save UI State
+    */
+
+   private ISensorSelectorItem createSensorSelectorItem(String id, DiscoverableDeviceState sState,
+       String name) {
+      return new SensorUsbSelectorItem(id, sState, name);
+   }
+
+   private View getMetaDialog() {
+      LayoutInflater factory = LayoutInflater.from(this);
+      return factory.inflate(R.layout.metadata_dialog, null);
+   }
+
+   private Spinner getMetaDialogSpinner(View metaDialog) {
+      return (Spinner) metaDialog.findViewById(R.id.sensor_type_spinner);
+   }
+
+   private List<DriverType> getDrivers() {
+      return SensorDriverDiscovery.getAllDriversForChannel(this, CommunicationChannelType.USB,
+          ManifestMetadata.FRAMEWORK_VERSION_2);
+   }
+
+   /**
+    * Updates The Sensor List -- Calls Service To Determine List And Updates
+    */
+   private void updateSensorList() {
+      Log.d(LOGTAG, "entered uodateSensorList");
+      if (usbManager != null) {
+         Log.d(LOGTAG, "calling usbManager.getDiscSensors()");
+         // request sensor list from service
+         List<DiscoverableDevice> sensorList = usbManager.getDiscoverableSensor();
+         if (sensorList != null) {
+            // load sensor list into list adapter
+            for (DiscoverableDevice device : sensorList) {
+               String id = device.getDeviceId();
+               DiscoverableDeviceState state = device.getDeviceState();
+               Log.d(LOGTAG, "Id: " + id + "  state: " + state);
+               String name = device.getDeviceName();
+
+               try {
+                  mSensorsAdapter.sensorStateChange(id, state, name);
+               } catch (IdNotFoundException e) {
+                  ISensorSelectorItem sensor = createSensorSelectorItem(id, state, name);
+                  mSensorsAdapter.addSensor(sensor);
+               }
+               mSensorsAdapter.notifyDataSetChanged();
+
+               if (id.compareTo(mProgressId) == 0) {
+                  if (mRegisterProgress != null) {
+                     mRegisterProgress.dismiss();
+                  }
+               }
+            }
+         }
+      }
+
+   }
+
+   /**
+    * Handles State Change Intents From Sensors, Passes MSG To UI Thread
+    */
+   private final BroadcastReceiver mSensorStateChangeReceiver = new BroadcastReceiver() {
+
+      public void onReceive(Context context, Intent intent) {
+
+         Log.d(LOGTAG, "Got state change event");
+         updateSensorList();
+      }
+   };
+
+   /**
+    * Displays The MetaDataEditor Dialog
+    *
+    * @param position Position Of The Item That Was Clicked
+    */
+   private void showMetaDataDialog(int position) {
+
+      // Setup Dialog
+      final AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+      if (metadialogView == null)
+         metadialogView = getMetaDialog();
+
+      // Set Text To Existing Values
+      alert.setView(metadialogView);
+
+      // Save Off Position For Click Handling
+      mMetaDialogPosition = position;
+
+      List<DriverType> drivers = getDrivers();
+
+      for (DriverType driver : drivers) {
+         Log.d(LOGTAG, "driver type: " + driver.getSensorType() + " address: " + driver
+             .getSensorDriverAddress());
+      }
+
+      ArrayAdapter<DriverType> adapter = new ArrayAdapter<DriverType>(this,
+          android.R.layout.simple_spinner_item, drivers);
+      adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+      //Log.d(LOGTAG,adapter.getCount()+"");
+
+      Spinner spinner = (Spinner) getMetaDialogSpinner(metadialogView);
+      if (spinner == null) {
+         Log.w(LOGTAG, "Spinner is null");
+      }
+      spinner.setAdapter(adapter);
+      Log.d(LOGTAG, spinner.getCount() + "");
+
+      // Positive Button & Negative Button & Handler
+      alert.setPositiveButton("Select", mMetaDiagListener);
+      alert.setNegativeButton("Cancel", mMetaDiagListener);
+      alert.show();
+   }
+
 }

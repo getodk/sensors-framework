@@ -39,12 +39,12 @@
 		 <action android:name="org.opendatakit.sensors.activity.AddSensorActivity" />
 		</intent-filter>
 		</activity>
+
 		<activity android:name=".bluetooth.ui.SensorBtSelectionHelpActivity"></activity>
 		<activity android:name=".bluetooth.ui.SensorBtSelectionActivity"></activity>
 		<activity android:name=".usb.ui.SensorUsbSelectionActivity"></activity>
 		<activity android:name=".usb.ui.SensorUsbSelectionHelpActivity"></activity>
-		<service android:exported="true" android:name=".service.SensorService">
-		</service>
+		<service android:exported="true" android:name=".service.SensorService"></service>
 
 	</application>
 </manifest>

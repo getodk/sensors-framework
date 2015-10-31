@@ -41,8 +41,9 @@ public class ServiceConstants {
 	public static final String DEFAULT_APP_NAME = "TABLES";
 
 	// Intent/Broadcast Receiver Bundle Keys
-	public static final String DATABASE_STATE_CHANGE = "db_state_change";
 	public static final String BT_STATE_CHANGE = "bt_state_change";
 	public static final String USB_STATE_CHANGE = "usb_state_change";
 	public static final String ACTION_SCAN_FINISHED = "action_scan_finished";
+
+	 public static final String APP_NAME_KEY = "app_name_key";
 }

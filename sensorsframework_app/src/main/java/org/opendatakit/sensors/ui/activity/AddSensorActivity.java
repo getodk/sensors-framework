@@ -15,74 +15,81 @@
  */
 package org.opendatakit.sensors.ui.activity;
 
-import org.opendatakit.sensors.Constants;
-import org.opendatakit.sensors.R;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import org.opendatakit.sensors.Constants;
+import org.opendatakit.sensors.R;
+import org.opendatakit.sensors.ServiceConstants;
 
 /**
- * 
  * @author wbrunette@gmail.com
  * @author rohitchaudhri@gmail.com
- * 
  */
 public class AddSensorActivity extends Activity {
 
-	private static final int RESULT_OK_BT = 1;
-	private static final int RESULT_OK_USB = 2;
+   private static final int RESULT_OK_BT = 1;
+   private static final int RESULT_OK_USB = 2;
 
-	protected static final String LOGTAG = "AddSensorActivity";
+   protected static final String LOGTAG = "AddSensorActivity";
 
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.add_sensor);
-	}
+   private String appName;
 
-	public void addUSBAction(View view) {
-		// need to add a USB sensor
-		Intent usbSensorSelectionIntent = new Intent(this,
-				org.opendatakit.sensors.usb.ui.SensorUsbSelectionActivity.class);
-		this.startActivityForResult(usbSensorSelectionIntent, RESULT_OK_USB);
-	}
+   @Override public void onCreate(Bundle savedInstanceState) {
+      super.onCreate(savedInstanceState);
 
-	public void addBluetoothAction(View view) {
-		// need to add a BT sensor
-		Intent btSensorSelectionIntent = new Intent(
-				this,
-				org.opendatakit.sensors.bluetooth.ui.SensorBtSelectionActivity.class);;
-		this.startActivityForResult(btSensorSelectionIntent, RESULT_OK_BT);
-	}
+      Intent intent = getIntent();
+      String tmpAppName = intent.getStringExtra(ServiceConstants.APP_NAME_KEY);
+      if (tmpAppName == null) {
+         // TODO: change to get the default from preferences instead of hardcode
+         appName = ServiceConstants.DEFAULT_APP_NAME;
+      } else {
+         appName = tmpAppName;
+      }
+      setContentView(R.layout.add_sensor);
+   }
 
-	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-		// Log.d(LOGTAG,"onActivityResult: resultCode: " + resultCode +
-		// " requestCode: " + requestCode);
-		switch (requestCode) {
-		case RESULT_OK_USB:
-			if (data != null) {
-				Log.d(LOGTAG,
-						"Finished discover USB sensor: "
-								+ data.getStringExtra(Constants.SENSOR_ID));
-				setResult(resultCode, data);
-			}
-			finish();
-			break;
-		case RESULT_OK_BT:
-			// Finish this Activity by passing data from sensor select activity
-			// back to application
-			if (data != null) {
-				Log.d(LOGTAG,
-						"Finished discover bluetooth sensor: "
-								+ data.getStringExtra(Constants.SENSOR_ID));
-				setResult(resultCode, data);
-			}
-			finish();
-			break;
-		}
-	}
+   public void addUSBAction(View view) {
+      // need to add a USB sensor
+      Intent usbSensorSelectionIntent = new Intent(this,
+          org.opendatakit.sensors.usb.ui.SensorUsbSelectionActivity.class);
+      usbSensorSelectionIntent.putExtra(ServiceConstants.APP_NAME_KEY, appName);
+      this.startActivityForResult(usbSensorSelectionIntent, RESULT_OK_USB);
+   }
+
+   public void addBluetoothAction(View view) {
+      // need to add a BT sensor
+      Intent btSensorSelectionIntent = new Intent(this,
+          org.opendatakit.sensors.bluetooth.ui.SensorBtSelectionActivity.class);
+      btSensorSelectionIntent.putExtra(ServiceConstants.APP_NAME_KEY, appName);
+      this.startActivityForResult(btSensorSelectionIntent, RESULT_OK_BT);
+   }
+
+   public void onActivityResult(int requestCode, int resultCode, Intent data) {
+      // Log.d(LOGTAG,"onActivityResult: resultCode: " + resultCode +
+      // " requestCode: " + requestCode);
+      switch (requestCode) {
+      case RESULT_OK_USB:
+         if (data != null) {
+            Log.d(LOGTAG,
+                "Finished discover USB sensor: " + data.getStringExtra(Constants.SENSOR_ID));
+            setResult(resultCode, data);
+         }
+         finish();
+         break;
+      case RESULT_OK_BT:
+         // Finish this Activity by passing data from sensor select activity
+         // back to application
+         if (data != null) {
+            Log.d(LOGTAG,
+                "Finished discover bluetooth sensor: " + data.getStringExtra(Constants.SENSOR_ID));
+            setResult(resultCode, data);
+         }
+         finish();
+         break;
+      }
+   }
 
 }
