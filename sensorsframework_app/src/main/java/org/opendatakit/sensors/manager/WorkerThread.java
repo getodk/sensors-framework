@@ -15,13 +15,18 @@
  */
 package org.opendatakit.sensors.manager;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.data.ColumnList;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
@@ -202,55 +207,53 @@ public class WorkerThread extends Thread {
 
   private void parseSensorDataAndInsertIntoTable(ODKSensor aSensor, String strTableDef,
       Bundle dataBundle) {
-    JSONObject jsonTableDef = null;
-    ContentValues tablesValues = new ContentValues();
 
-    boolean insertSuccess = false;
+    ContentValues tablesValues = new ContentValues();
     OdkDbHandle db = null;
     try {
       db = getDatabase().openDatabase(aSensor.getAppNameForDatabase());
-      // TODO: rework to reduce length of transaction. i.e., read the table
-      // configuration outside of the transaction.  Commit creating the table
-      // separately from inserting the data row into it.
-      getDatabase().beginTransaction(aSensor.getAppNameForDatabase(), db);
 
-      jsonTableDef = new JSONObject(strTableDef);
+      if (strTableDef == null) {
+        throw new IllegalArgumentException("The tableDefinition is null!");
+      }
 
-      String tableId = jsonTableDef.getJSONObject(ODKJsonNames.jsonTableStr).getString(
-          ODKJsonNames.jsonTableIdStr);
+      JSONObject theTableDef =
+          (new JSONObject(strTableDef)).getJSONObject(ODKJsonNames.jsonTableStr);
+      String tableId = theTableDef.getString(ODKJsonNames.jsonTableIdStr);
 
       if (tableId == null) {
-        return;
+        throw new IllegalArgumentException("The tableDefinition does not specify the tableId!");
       }
 
-      boolean success;
+       OrderedColumns orderedDefs;
+       // if the table does not exist, create it.
+      // NOTE: if the table does exist, we don't verify that the table schema matches.
+      // if we want to do that, always take the not-exists branch...
+      if (!getDatabase().hasTableId(aSensor.getAppNameForDatabase(), db, tableId)) {
 
-      success = false;
-      try {
-        success = getDatabase().hasTableId(aSensor.getAppNameForDatabase(), db, tableId);
-      } catch (Exception e) {
-        e.printStackTrace();
-        throw new SQLException("Exception testing for tableId " + tableId);
-      }
-      if (!success) {
-        sensorManager.parseDriverTableDefintionAndCreateTable(this, 
-            aSensor.getAppNameForDatabase(), db, aSensor.getSensorID());
+         List<Column> columns = new ArrayList<Column>();
+         // Create the columns for the driver table
+         JSONArray colJsonArray = theTableDef.getJSONArray(ODKJsonNames.jsonColumnsStr);
+
+         for (int i = 0; i < colJsonArray.length(); i++) {
+            JSONObject colJson = colJsonArray.getJSONObject(i);
+            String elementKey = colJson.getString(ODKJsonNames.jsonElementKeyStr);
+            String elementName = colJson.getString(ODKJsonNames.jsonElementNameStr);
+            String elementType = colJson.getString(ODKJsonNames.jsonElementTypeStr);
+            String listChildElementKeys = colJson.getString(ODKJsonNames
+                .jsonListChildElementKeysStr);
+            columns.add(new Column(elementKey, elementName, elementType, listChildElementKeys));
+         }
+
+         // Create the table for driver
+         ColumnList cols = new ColumnList(columns);
+         orderedDefs = getDatabase().createOrOpenDBTableWithColumns(aSensor.getAppNameForDatabase()
+             , db, tableId, cols);
+      } else {
+         orderedDefs = getDatabase().getUserDefinedColumns(aSensor.getAppNameForDatabase(), db, tableId);
       }
 
-      success = false;
-      try {
-        success = getDatabase().hasTableId(aSensor.getAppNameForDatabase(), db, tableId);
-      } catch (Exception e) {
-        e.printStackTrace();
-        throw new SQLException("Exception testing for tableId " + tableId);
-      }
-      if (!success) {
-        throw new SQLException("Unable to create tableId " + tableId);
-      }
-
-      OrderedColumns orderedDefs = getDatabase().getUserDefinedColumns(aSensor.getAppNameForDatabase(), db, tableId);
-
-      // Create the columns for the driver table
+      // store data values into the user-defined columns of the driver table
       for (ColumnDefinition col : orderedDefs.getColumnDefinitions()) {
         if (!col.isUnitOfRetention()) {
           continue;
@@ -298,14 +301,12 @@ public class WorkerThread extends Thread {
         getDatabase().insertDataIntoExistingDBTableWithId(aSensor.getAppNameForDatabase(), db, tableId, orderedDefs,
             tablesValues, rowId);
       }
-      insertSuccess = true;
-
     } catch (Exception e) {
       e.printStackTrace();
     } finally {
       if (db != null) {
         try {
-          getDatabase().closeTransactionAndDatabase(aSensor.getAppNameForDatabase(), db, insertSuccess);
+          getDatabase().closeDatabase(aSensor.getAppNameForDatabase(), db);
         } catch (RemoteException e) {
           e.printStackTrace();
         }

@@ -21,12 +21,6 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.common.android.data.ColumnList;
-import org.opendatakit.common.android.utilities.ODKJsonNames;
-import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.sensors.CommunicationChannelType;
 import org.opendatakit.sensors.DriverCommunicator;
 import org.opendatakit.sensors.DriverType;
@@ -183,56 +177,6 @@ public class ODKSensorManager {
 		driverTypes = allDrivers;
 	}
 	
-	public void parseDriverTableDefintionAndCreateTable(WorkerThread worker, String appName, OdkDbHandle db, String sensorId) {
-		String strTableDef = null;
-		// Get the sensor information from the database
-		SensorData sensorDataFromDb;
-		if (databaseManager.sensorIsInDatabase(sensorId)) {
-			sensorDataFromDb = databaseManager.getSensorDataForId(sensorId);
-			DriverType driver = getDriverType(sensorDataFromDb.type);
-			if (driver != null) {
-				strTableDef = driver.getTableDefinitionStr();
-			}
-		}
-		
-		if (strTableDef == null) {
-			return;
-		}
-		
-		JSONObject jsonTableDef = null;
-		
-		try {
-
-			jsonTableDef = new JSONObject(strTableDef);
-			
-			JSONObject theTableDef = jsonTableDef.getJSONObject(ODKJsonNames.jsonTableStr);
-			
-			String tableId = theTableDef.getString(ODKJsonNames.jsonTableIdStr);
-    	   
-			List<Column> columns = new ArrayList<Column>();
- 			
- 			// Create the columns for the driver table
- 			JSONArray colJsonArray = theTableDef.getJSONArray(ODKJsonNames.jsonColumnsStr);
- 			
- 			for (int i = 0; i < colJsonArray.length(); i++) {
- 				JSONObject colJson = colJsonArray.getJSONObject(i);
-             String elementKey = colJson.getString(ODKJsonNames.jsonElementKeyStr);
- 				String elementName = colJson.getString(ODKJsonNames.jsonElementNameStr);
-             String elementType = colJson.getString(ODKJsonNames.jsonElementTypeStr);
-             String listChildElementKeys = colJson.getString(ODKJsonNames.jsonListChildElementKeysStr);
-             columns.add(new Column(elementKey, elementName, elementType, listChildElementKeys));
- 			}
- 			
- 			// Create the table for driver
- 			
- 			ColumnList cols = new ColumnList(columns);
- 			worker.getDatabase().createOrOpenDBTableWithColumns(appName, db, tableId, cols);
-     
-        } catch (Exception e) {
-        	e.printStackTrace();
-        }
-	}
-
 	public DriverType getDriverType(String type) {
 		DriverType foundDriverType = null;
 		for(DriverType driverType : driverTypes) {
