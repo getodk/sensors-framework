@@ -15,9 +15,6 @@
  */
 package org.opendatakit.sensors.service;
 
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -26,6 +23,9 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 
@@ -154,15 +154,6 @@ public class SensorServiceProxy implements ServiceConnection {
 	public boolean isBusy(String id) throws RemoteException{
 		try {
 			return sensorSvcProxy.isBusy(id);
-		} catch (RemoteException e) {
-			e.printStackTrace();
-			throw e;
-		}
-	}
-	
-	public boolean addSensor(String id, String driverType, String commChannel) throws RemoteException{
-		try {
-			return sensorSvcProxy.addSensor(id, driverType, commChannel);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 			throw e;

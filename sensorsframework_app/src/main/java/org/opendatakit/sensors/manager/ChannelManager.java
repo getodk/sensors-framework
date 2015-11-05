@@ -16,12 +16,12 @@
 package org.opendatakit.sensors.manager;
 
 
-import java.util.List;
-
 import org.opendatakit.sensors.CommunicationChannelType;
 import org.opendatakit.sensors.DriverType;
 import org.opendatakit.sensors.ODKSensor;
 import org.opendatakit.sensors.SensorStateMachine;
+
+import java.util.List;
 
 /**
  * 
@@ -40,7 +40,7 @@ public interface ChannelManager {
 	public SensorStateMachine getSensorStatus(String id);
 	
 	// Register sensor
-	public boolean sensorRegister(String id, DriverType sensorDriver);
+	public boolean sensorRegister(String id, DriverType sensorDriver, String appName);
 	
 	public List<DiscoverableDevice> getDiscoverableSensor();
 	

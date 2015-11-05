@@ -15,24 +15,6 @@
  */
 package org.opendatakit.sensors.usb.ui;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.opendatakit.sensors.CommunicationChannelType;
-import org.opendatakit.sensors.Constants;
-import org.opendatakit.sensors.DriverType;
-import org.opendatakit.sensors.R;
-import org.opendatakit.sensors.SensorDriverDiscovery;
-import org.opendatakit.sensors.SensorsSingleton;
-import org.opendatakit.sensors.ServiceConstants;
-import org.opendatakit.sensors.drivers.ManifestMetadata;
-import org.opendatakit.sensors.exception.IdNotFoundException;
-import org.opendatakit.sensors.manager.DiscoverableDevice;
-import org.opendatakit.sensors.manager.DiscoverableDeviceState;
-import org.opendatakit.sensors.ui.ISensorSelectorItem;
-import org.opendatakit.sensors.ui.SensorsAdapter;
-import org.opendatakit.sensors.usb.USBManager;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -53,6 +35,24 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Spinner;
 
+import org.opendatakit.sensors.CommunicationChannelType;
+import org.opendatakit.sensors.Constants;
+import org.opendatakit.sensors.DriverType;
+import org.opendatakit.sensors.R;
+import org.opendatakit.sensors.SensorDriverDiscovery;
+import org.opendatakit.sensors.SensorsSingleton;
+import org.opendatakit.sensors.ServiceConstants;
+import org.opendatakit.sensors.drivers.ManifestMetadata;
+import org.opendatakit.sensors.exception.IdNotFoundException;
+import org.opendatakit.sensors.manager.DiscoverableDevice;
+import org.opendatakit.sensors.manager.DiscoverableDeviceState;
+import org.opendatakit.sensors.ui.ISensorSelectorItem;
+import org.opendatakit.sensors.ui.SensorsAdapter;
+import org.opendatakit.sensors.usb.USBManager;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 
  * @author wbrunette@gmail.com
@@ -62,7 +62,7 @@ import android.widget.Spinner;
 public class SensorUsbSelectionActivity extends Activity {
 
 	// logging
-	private static final String LOGTAG = "SensorSelectionActivity";
+	private static final String LOGTAG = SensorUsbSelectionActivity.class.getSimpleName();
 	private static final boolean LOGENABLED = true;
 
 	private static final String M_SENSOR_ITEMS = "mSensorItems";
@@ -186,7 +186,7 @@ public class SensorUsbSelectionActivity extends Activity {
 			// On Positive Set The Text W/ The ListItem
 			case DialogInterface.BUTTON_POSITIVE:
 				showRegistrationProgress(si.getSensorId(), driver.getSensorType());
-				usbManager.sensorRegister(si.getSensorId(), driver);
+				usbManager.sensorRegister(si.getSensorId(), driver, ServiceConstants.DEFAULT_APP_NAME);
 
 				// Just Leave On Cancel
 			default:
@@ -241,9 +241,7 @@ public class SensorUsbSelectionActivity extends Activity {
 
 	/**
 	 * Save UI State
-	 * 
-	 * @param outState
-	 *            bundle to save state into
+	 *
 	 */
 
 	private ISensorSelectorItem createSensorSelectorItem(String id, DiscoverableDeviceState sState, String name) {

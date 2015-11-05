@@ -15,10 +15,8 @@
  */
 package org.opendatakit.sensors.tests;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import android.content.Context;
+import android.util.Log;
 
 import org.opendatakit.sensors.CommunicationChannelType;
 import org.opendatakit.sensors.DriverType;
@@ -28,8 +26,10 @@ import org.opendatakit.sensors.manager.DatabaseManager;
 import org.opendatakit.sensors.manager.DiscoverableDevice;
 import org.opendatakit.sensors.manager.SensorNotFoundException;
 
-import android.content.Context;
-import android.util.Log;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * 
@@ -68,7 +68,7 @@ public class DummyManager extends AbstractChannelManagerBase {
 		return mSensorMap.get(id);
 	}
 
-	public boolean sensorRegister(String id, DriverType sensorType) {
+	public boolean sensorRegister(String id, DriverType sensorType, String appName) {
 		if (DEBUG) Log.d(LOGTAG , "In sensor register.");
 		if (id == null || sensorType == null) {
 			Log.d(LOGTAG," registeration FAILED. sensor id or sensorType is null.");
@@ -80,7 +80,7 @@ public class DummyManager extends AbstractChannelManagerBase {
 			if (DEBUG) Log.d(LOGTAG, "DummySensor is null");
 			// NEED TO ADD A SENSOR
 
-			mSensorManager.addSensor(id, sensorType);
+			mSensorManager.addSensor(id, sensorType, appName);
 			if (DEBUG) Log.d(LOGTAG, "Added dummy sensor to sensor manager.");
 		}
 

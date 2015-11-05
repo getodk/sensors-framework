@@ -15,12 +15,13 @@
  */
 package org.opendatakit.sensors.bluetooth;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.util.Log;
 
 import org.opendatakit.sensors.CommunicationChannelType;
 import org.opendatakit.sensors.DriverType;
@@ -31,13 +32,12 @@ import org.opendatakit.sensors.manager.DetailedSensorState;
 import org.opendatakit.sensors.manager.DiscoverableDevice;
 import org.opendatakit.sensors.manager.SensorNotFoundException;
 
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.util.Log;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * 
@@ -67,8 +67,6 @@ public class BluetoothManager extends AbstractChannelManagerBase {
 	 * 
 	 * @param context
 	 *            application context
-	 * @param database
-	 *            service database
 	 */
 	public BluetoothManager(Context context) {
 		super(context, CommunicationChannelType.BLUETOOTH);
@@ -185,7 +183,7 @@ public class BluetoothManager extends AbstractChannelManagerBase {
 	 * 
 	 * @return True If That Is The Case, Otherwise Returns False
 	 */
-	public synchronized boolean sensorRegister(String id, DriverType sensorType) {
+	public synchronized boolean sensorRegister(String id, DriverType sensorType, String appName) {
 		Log.d(LOGTAG, "In sensor register.");
 		
 		if(id == null || sensorType == null) {
@@ -207,7 +205,7 @@ public class BluetoothManager extends AbstractChannelManagerBase {
 			if (bs == null) {
 				Log.d(LOGTAG, "BS is null, ADDING sensor to sensor manager");
 
-				mSensorManager.addSensor(id, sensorType);
+				mSensorManager.addSensor(id, sensorType, appName);
 //				mDatabaseManager.sensorUpdateRegState(id.toString(),
 //						SensorRegistrationState.REGISTERED, sensorType.getSensorType());
 				Log.d(LOGTAG, "Added bluetooth sensor to sensor manager.");

@@ -15,12 +15,6 @@
  */
 package org.opendatakit.sensors.manager;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.opendatakit.sensors.CommunicationChannelType;
-import org.opendatakit.sensors.ServiceConstants;
-
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -28,6 +22,12 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
+
+import org.opendatakit.sensors.CommunicationChannelType;
+import org.opendatakit.sensors.ServiceConstants;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 
@@ -37,14 +37,14 @@ import android.util.Log;
  */
 public class DatabaseManager {
 
-	// logging
+    // logging
 	private static final String LOGTAG = "SensorServiceDatabase";
 
 	// database metadata
 	private static final String DATABASE_NAME = "sensors.db";
-	private static final int DATABASE_VERSION = 3;
+	private static final int DATABASE_VERSION = 4;
 
-	// database helper
+    // database helper
 	private DatabaseHelper mOpenHelper;
 	
 	/**
@@ -61,7 +61,7 @@ public class DatabaseManager {
 		public static final String COMM_TYPE = "comm_type"; // communication type (Bluetooth, USB, etc.)
 		public static final String TYPE = "type"; // sensor type
 		public static final String STATE = "state"; // sensor state
-		
+		public static final String APP_NAME = "app_name"; // the app name space the sensor readings should be stored
 	}
 
 	/**
@@ -91,8 +91,9 @@ public class DatabaseManager {
 						SensorTable.ID	+ " TEXT PRIMARY KEY," + 
 						SensorTable.NAME + " TEXT," + 
 						SensorTable.TYPE + " TEXT," + 
-						SensorTable.STATE + " TEXT," + 
-						SensorTable.COMM_TYPE + " TEXT"	+ ");");
+						SensorTable.STATE + " TEXT," +
+						SensorTable.COMM_TYPE + " TEXT," +
+						SensorTable.APP_NAME + " TEXT"	+ ");");
 				
 			} catch (SQLException e) {
 				Log.w(LOGTAG, "DatabaseHelper onCreate Failed!");
@@ -139,37 +140,39 @@ public class DatabaseManager {
 	// ---------------------------------------------------------------------------------------------
 	// SENSORS
 	// ---------------------------------------------------------------------------------------------
-	
-	/**
-	 * Add new sensor. Replaces any existing sensor with the same id.
-	 * @param id sensor id
-	 * @param name sensor name
-	 * @param type sensor type
-	 * @param state sensor state
-	 * @param regstate sensor registration state
-	 */
-	public synchronized void sensorInsert(String id, String name, String type, DetailedSensorState state,
-			 CommunicationChannelType commType) {
-		SQLiteDatabase db = mOpenHelper.getWritableDatabase();
 
-		// store column values
-		ContentValues values = new ContentValues();
-		values.put(SensorTable.ID, id);
-		values.put(SensorTable.NAME, name);
-		values.put(SensorTable.TYPE, type);
-		values.put(SensorTable.STATE, state.name());
-		values.put(SensorTable.COMM_TYPE, commType.name());
+    /**
+     * Add new sensor. Replaces any existing sensor with the same id.
+     * @param id sensor id
+     * @param name sensor name
+     * @param type sensor type
+     * @param state sensor state
+     * @param commType sensor communication type
+     *
+     */
+    public synchronized void sensorInsert(String id, String name, String type, DetailedSensorState state,
+                                          CommunicationChannelType commType, String appName) {
+        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
 
-		// insert (replace on conflicts)
-		try {
-			db.insertWithOnConflict(SensorTable.TABLE_NAME, null, values,
-					SQLiteDatabase.CONFLICT_REPLACE);
-		} catch (SQLException e) {
-			Log.w(LOGTAG, e.getMessage());
-			Log.w(LOGTAG, Log.getStackTraceString(e));
-		}
-		
-	}
+        // store column values
+        ContentValues values = new ContentValues();
+        values.put(SensorTable.ID, id);
+        values.put(SensorTable.NAME, name);
+        values.put(SensorTable.TYPE, type);
+        values.put(SensorTable.STATE, state.name());
+        values.put(SensorTable.COMM_TYPE, commType.name());
+        values.put(SensorTable.APP_NAME, appName);
+
+        // insert (replace on conflicts)
+        try {
+            db.insertWithOnConflict(SensorTable.TABLE_NAME, null, values,
+                    SQLiteDatabase.CONFLICT_REPLACE);
+        } catch (SQLException e) {
+            Log.w(LOGTAG, e.getMessage());
+            Log.w(LOGTAG, Log.getStackTraceString(e));
+        }
+
+    }
 
 	/**
 	 * Update existing sensor state
@@ -312,7 +315,7 @@ public class DatabaseManager {
 		SQLiteDatabase db = mOpenHelper.getReadableDatabase();
 
 		// query columns
-		String[] cols = { SensorTable.ID, SensorTable.NAME, SensorTable.TYPE, SensorTable.STATE};
+		String[] cols = { SensorTable.ID, SensorTable.NAME, SensorTable.TYPE, SensorTable.STATE, SensorTable.APP_NAME};
 		String[] args = { sensorId };
 		
 		// run query
@@ -325,6 +328,7 @@ public class DatabaseManager {
 			data.name = cursor.getString(1);
 			data.type = cursor.getString(2);
 			data.state = DetailedSensorState.valueOf(cursor.getString(3));
+            data.appName = cursor.getString(4);
 		}
 
 		cursor.close();
@@ -339,7 +343,7 @@ public class DatabaseManager {
 		SQLiteDatabase db = mOpenHelper.getReadableDatabase();
 
 		// query columns
-		String[] cols = { SensorTable.ID, SensorTable.NAME, SensorTable.TYPE, SensorTable.STATE};
+		String[] cols = { SensorTable.ID, SensorTable.NAME, SensorTable.TYPE, SensorTable.STATE, SensorTable.APP_NAME};
 		String[] args = { type.name() };
 		
 		// run query
@@ -353,6 +357,7 @@ public class DatabaseManager {
 			data.name = cursor.getString(1);
 			data.type = cursor.getString(2);
 			data.state = DetailedSensorState.valueOf(cursor.getString(3));
+            data.appName = cursor.getString(4);
 			results.add(data);
 		}
 

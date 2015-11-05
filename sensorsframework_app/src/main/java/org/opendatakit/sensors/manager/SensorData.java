@@ -29,5 +29,5 @@ public class SensorData {
 	public String name;
 	public String type;
 	public DetailedSensorState state;
-//	public SensorRegistrationState regstate;
+	public String appName;
 }

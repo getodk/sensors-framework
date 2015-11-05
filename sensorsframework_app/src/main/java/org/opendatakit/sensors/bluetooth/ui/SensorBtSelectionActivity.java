@@ -15,24 +15,6 @@
  */
 package org.opendatakit.sensors.bluetooth.ui;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.opendatakit.sensors.CommunicationChannelType;
-import org.opendatakit.sensors.Constants;
-import org.opendatakit.sensors.DriverType;
-import org.opendatakit.sensors.R;
-import org.opendatakit.sensors.SensorDriverDiscovery;
-import org.opendatakit.sensors.SensorsSingleton;
-import org.opendatakit.sensors.ServiceConstants;
-import org.opendatakit.sensors.bluetooth.BluetoothManager;
-import org.opendatakit.sensors.drivers.ManifestMetadata;
-import org.opendatakit.sensors.exception.IdNotFoundException;
-import org.opendatakit.sensors.manager.DiscoverableDevice;
-import org.opendatakit.sensors.manager.DiscoverableDeviceState;
-import org.opendatakit.sensors.ui.ISensorSelectorItem;
-import org.opendatakit.sensors.ui.SensorsAdapter;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -51,12 +33,30 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.ToggleButton;
-import android.widget.AdapterView.OnItemClickListener;
+
+import org.opendatakit.sensors.CommunicationChannelType;
+import org.opendatakit.sensors.Constants;
+import org.opendatakit.sensors.DriverType;
+import org.opendatakit.sensors.R;
+import org.opendatakit.sensors.SensorDriverDiscovery;
+import org.opendatakit.sensors.SensorsSingleton;
+import org.opendatakit.sensors.ServiceConstants;
+import org.opendatakit.sensors.bluetooth.BluetoothManager;
+import org.opendatakit.sensors.drivers.ManifestMetadata;
+import org.opendatakit.sensors.exception.IdNotFoundException;
+import org.opendatakit.sensors.manager.DiscoverableDevice;
+import org.opendatakit.sensors.manager.DiscoverableDeviceState;
+import org.opendatakit.sensors.ui.ISensorSelectorItem;
+import org.opendatakit.sensors.ui.SensorsAdapter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -239,7 +239,7 @@ public class SensorBtSelectionActivity extends Activity {
 			case DialogInterface.BUTTON_POSITIVE:
 				showRegistrationProgress(si.getSensorId(),
 						driver.getSensorType());
-				btManager.sensorRegister(si.getSensorId(), driver);
+				btManager.sensorRegister(si.getSensorId(), driver, ServiceConstants.DEFAULT_APP_NAME);
 
 				// Just Leave On Cancel
 			case DialogInterface.BUTTON_NEGATIVE:

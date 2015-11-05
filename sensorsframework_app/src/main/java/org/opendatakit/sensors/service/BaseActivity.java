@@ -15,8 +15,6 @@
  */
 package org.opendatakit.sensors.service;
 
-import java.util.List;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
@@ -25,6 +23,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.util.Log;
+
+import java.util.List;
 
 /**
  * This may be extended by various sensor implementations.
@@ -154,14 +154,6 @@ public class BaseActivity extends Activity {
 	protected boolean isBusy(String id) throws RemoteException {
 		if (verifyConnection()) {
 			return mwProxy.isBusy(id);
-		}
-		throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
-	}
-
-	protected boolean addSensor(String id, String driverType, String commChannel)
-			throws RemoteException {
-		if (verifyConnection()) {
-			return mwProxy.addSensor(id, driverType, commChannel);
 		}
 		throw new NullPointerException(MIDDLEWARE_PROXY_FAILED_MSG);
 	}

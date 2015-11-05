@@ -15,11 +15,12 @@
  */
 package org.opendatakit.sensors.builtin;
 
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.os.Bundle;
+import android.util.Log;
 
 import org.opendatakit.sensors.CommunicationChannelType;
 import org.opendatakit.sensors.Driver;
@@ -30,12 +31,11 @@ import org.opendatakit.sensors.SensorDataParseResponse;
 import org.opendatakit.sensors.builtin.drivers.AbstractBuiltinDriver;
 import org.opendatakit.sensors.manager.SensorNotFoundException;
 
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
-import android.os.Bundle;
-import android.util.Log;
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * 
@@ -65,11 +65,11 @@ public class ODKBuiltInSensor implements ODKSensor,
 	private int rate;
 
 	public ODKBuiltInSensor(BuiltInSensorType type,
-			SensorManager builtInSensorManager, String sensorID) throws Exception {
+							SensorManager builtInSensorManager, String sensorID, String appName) throws Exception {
+		this.appNameForDatabase = appName;
 		this.sensorType = type;
 		this.mBuiltInSensorManager = builtInSensorManager;
 		this.sensorId = sensorID;
-		this.appNameForDatabase = null;
 		Class<? extends AbstractBuiltinDriver> sensorClass = sensorType
 				.getDriverClass();
 		Constructor<? extends AbstractBuiltinDriver> constructor;
@@ -81,9 +81,8 @@ public class ODKBuiltInSensor implements ODKSensor,
 	}
 
 	@Override
-	public void connect(String appForDatabase)
+	public void connect()
 			throws SensorNotFoundException {
-		this.appNameForDatabase = appForDatabase;
 		Sensor sensor = mBuiltInSensorManager.getDefaultSensor(sensorType
 				.getType());
 		if (sensor == null) {

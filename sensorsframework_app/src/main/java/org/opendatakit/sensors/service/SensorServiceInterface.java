@@ -15,8 +15,10 @@
  */
 package org.opendatakit.sensors.service;
 
-import java.util.ArrayList;
-import java.util.List;
+import android.os.Bundle;
+import android.os.Debug;
+import android.os.RemoteException;
+import android.util.Log;
 
 import org.opendatakit.sensors.CommunicationChannelType;
 import org.opendatakit.sensors.ODKSensor;
@@ -30,10 +32,8 @@ import org.opendatakit.sensors.manager.SensorNotFoundException;
 import org.opendatakit.sensors.tests.DummyManager;
 import org.opendatakit.sensors.usb.USBManager;
 
-import android.os.Bundle;
-import android.os.Debug;
-import android.os.RemoteException;
-import android.util.Log;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 
@@ -69,7 +69,7 @@ public class SensorServiceInterface extends ODKSensorService.Stub{
 		try {
 			if(sensor != null) {
 				Log.d(TAG, "calling Facade.connect " + id);
-				sensor.connect(appForDatabase);
+				sensor.connect();
 				Log.d(TAG, "returned from Facade.connect " + id);
 			}
 		}
@@ -172,7 +172,7 @@ public class SensorServiceInterface extends ODKSensorService.Stub{
 		return state.workStatus == SensorWorkStatus.BUSY;
 	}
 
-	public boolean addSensor(String id, String driverType, String commChannel)
+	public boolean addSensor(String id, String driverType, String commChannel, String appName)
 	throws RemoteException {
 		Log.d(TAG, "Inside Add sensor");
 		
@@ -182,11 +182,11 @@ public class SensorServiceInterface extends ODKSensorService.Stub{
 		if(commChannelType != null) {
 			switch (commChannelType) {
 			case BLUETOOTH:
-				return mBtManager.sensorRegister(id, mSensorManager.getDriverType(driverType));
+				return mBtManager.sensorRegister(id, mSensorManager.getDriverType(driverType), appName);
 			case USB:
-				return mUsbManager.sensorRegister(id, mSensorManager.getDriverType(driverType));
+				return mUsbManager.sensorRegister(id, mSensorManager.getDriverType(driverType), appName);
 			case DUMMY:
-				return mDummyManager.sensorRegister(id, mSensorManager.getDriverType(driverType));
+				return mDummyManager.sensorRegister(id, mSensorManager.getDriverType(driverType), appName);
 			default:
 				break;
 			}

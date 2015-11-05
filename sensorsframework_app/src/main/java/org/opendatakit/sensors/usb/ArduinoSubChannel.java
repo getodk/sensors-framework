@@ -15,12 +15,13 @@
  */
 package org.opendatakit.sensors.usb;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Iterator;
-import java.util.List;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.hardware.usb.UsbAccessory;
+import android.hardware.usb.UsbManager;
+import android.os.ParcelFileDescriptor;
+import android.util.Log;
 
 import org.opendatakit.sensors.DriverType;
 import org.opendatakit.sensors.ODKSensor;
@@ -32,13 +33,12 @@ import org.opendatakit.sensors.manager.ODKSensorManager;
 import org.opendatakit.sensors.manager.SensorNotFoundException;
 import org.opendatakit.sensors.usb.a3pTransport.A3PSession;
 
-import android.app.PendingIntent;
-import android.content.Context;
-import android.content.Intent;
-import android.hardware.usb.UsbAccessory;
-import android.hardware.usb.UsbManager;
-import android.os.ParcelFileDescriptor;
-import android.util.Log;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * 
@@ -262,7 +262,7 @@ public class ArduinoSubChannel implements USBCommSubChannel, Runnable {
 	 * 
 	 * @return True if sensor is successfully registered or has already been registered
 	 */
-	public boolean sensorRegister(String id_to_add, DriverType sensorType) {
+	public boolean sensorRegister(String id_to_add, DriverType sensorType, String appName) {
 		Log.d(TAG, "In sensor register.");
 		if (sensorType == null) {
 			Log.d(TAG, "Did not find sensor type for sensor " + id_to_add);
@@ -299,7 +299,7 @@ public class ArduinoSubChannel implements USBCommSubChannel, Runnable {
 			if(mSensorManager.getSensor(id_to_add) != null) 
 				return true;
 			// Need to add the sensor
-			if(mSensorManager.addSensor(id_to_add, sensorType)){
+			if(mSensorManager.addSensor(id_to_add, sensorType, appName)){
 				Log.d(TAG, "Added usb sensor to sensor manager.");
 				
 				Intent i = new Intent();

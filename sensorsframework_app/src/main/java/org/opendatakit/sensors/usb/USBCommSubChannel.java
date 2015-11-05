@@ -16,11 +16,11 @@
 package org.opendatakit.sensors.usb;
 
 
-import java.util.List;
-
 import org.opendatakit.sensors.DriverType;
 import org.opendatakit.sensors.manager.DiscoverableDevice;
 import org.opendatakit.sensors.manager.SensorNotFoundException;
+
+import java.util.List;
 
 /**
  * 
@@ -38,7 +38,7 @@ public interface USBCommSubChannel {
 	public List<DiscoverableDevice> getDiscoverableSensor();
 
 	// Register sensor
-	public boolean sensorRegister(String id, DriverType sensorDriver);
+	public boolean sensorRegister(String id, DriverType sensorDriver, String appName);
 	
 	// Connect to sensor
 	public void sensorConnect(String id) throws SensorNotFoundException;

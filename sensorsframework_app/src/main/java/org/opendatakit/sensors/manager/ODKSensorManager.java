@@ -15,11 +15,8 @@
  */
 package org.opendatakit.sensors.manager;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
+import android.content.Context;
+import android.util.Log;
 
 import org.opendatakit.sensors.CommunicationChannelType;
 import org.opendatakit.sensors.DriverCommunicator;
@@ -30,6 +27,7 @@ import org.opendatakit.sensors.ODKSensor;
 import org.opendatakit.sensors.SensorDataPacket;
 import org.opendatakit.sensors.SensorDriverDiscovery;
 import org.opendatakit.sensors.SensorStateMachine;
+import org.opendatakit.sensors.ServiceConstants;
 import org.opendatakit.sensors.bluetooth.BluetoothManager;
 import org.opendatakit.sensors.builtin.BuiltInSensorType;
 import org.opendatakit.sensors.builtin.ODKBuiltInSensor;
@@ -37,8 +35,11 @@ import org.opendatakit.sensors.drivers.ManifestMetadata;
 import org.opendatakit.sensors.tests.DummyManager;
 import org.opendatakit.sensors.usb.USBManager;
 
-import android.content.Context;
-import android.util.Log;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 
@@ -48,7 +49,7 @@ import android.util.Log;
  */
 public class ODKSensorManager {
 
-	private static final String TAG = "ODKSensorManager";
+	private static final String LOGTAG = ODKSensorManager.class.getSimpleName();
 	private DatabaseManager databaseManager;
 	
 	private Thread workerThread;
@@ -90,8 +91,8 @@ public class ODKSensorManager {
 				if(sensorType != null) {
 					try {
 						String id = sensorType.name();
-						//Log.d(TAG,"Found sensor "+ id);
-						ODKSensor sensor = new ODKBuiltInSensor(sensorType, builtInSensorManager, id);			
+						//Log.d(LOGTAG,"Found sensor "+ id);
+						ODKSensor sensor = new ODKBuiltInSensor(sensorType, builtInSensorManager, id, ServiceConstants.DEFAULT_APP_NAME);
 						sensors.put(id, sensor);
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -103,48 +104,48 @@ public class ODKSensorManager {
 		// load sensors from the database		
 		for(ChannelManager channelManager : channelManagers.values()) {
 			CommunicationChannelType type = channelManager.getCommChannelType();
-			Log.d(TAG, "Load from DB:" + type.name());
+			Log.d(LOGTAG, "Load from DB:" + type.name());
 
 			List<SensorData> savedSensorList =  databaseManager.sensorList(type);
 
 			for(SensorData sensorData : savedSensorList) {
-				Log.d(TAG, "Sensor in DB:" + sensorData.id + " Type:" + sensorData.type);
+				Log.d(LOGTAG, "Sensor in DB:" + sensorData.id + " Type:" + sensorData.type);
 				DriverType driverType = getDriverType(sensorData.type);
 
 				if(driverType != null) {
-					Log.d(TAG,"initing sensor from DB: id: " + sensorData.id + 
+					Log.d(LOGTAG,"initing sensor from DB: id: " + sensorData.id +
 							" driverType: " + sensorData.type + " state " + sensorData.state);
 
-					if(connectToDriver(sensorData.id,driverType)) {						
-						Log.d(TAG,sensorData.id + " connected to driver " + sensorData.type);
+					if(connectToDriver(sensorData.id, sensorData.appName, driverType)) {
+						Log.d(LOGTAG,sensorData.id + " connected to driver " + sensorData.type);
 
 						if(sensorData.state == DetailedSensorState.CONNECTED) {
 							try {
 								channelManager.sensorConnect(sensorData.id);
 //								updateSensorState(sensorData.id, DetailedSensorState.CONNECTED);
-								Log.d(TAG,"connected to sensor " + sensorData.id  + " over " + channelManager.getCommChannelType());
+								Log.d(LOGTAG,"connected to sensor " + sensorData.id  + " over " + channelManager.getCommChannelType());
 							}
 							catch(SensorNotFoundException snfe) {
 								updateSensorState(sensorData.id, DetailedSensorState.DISCONNECTED);
-								Log.d(TAG,"SensorNotFoundException. unable to connect to sensor " + sensorData.id + " over " + channelManager.getCommChannelType());
+								Log.d(LOGTAG,"SensorNotFoundException. unable to connect to sensor " + sensorData.id + " over " + channelManager.getCommChannelType());
 							}
 						}
 					}
 				}
 				else {
-					Log.e(TAG,"driver NOT FOUND for type : " + sensorData.type);
+					Log.e(LOGTAG,"driver NOT FOUND for type : " + sensorData.type);
 				}
 			}					
 		}
 	}
 	
 	
-	private boolean connectToDriver(String id,DriverType driver) {
+	private boolean connectToDriver(String id, String appName, DriverType driver) {
 		// create the sensor		
 		ODKExternalSensor sensorFacade = null;
 		try {
 			DriverCommunicator sensorDriver = new GenericDriverProxy(driver.getSensorPackageName(), driver.getSensorDriverAddress(), this.svcContext);
-			sensorFacade = new ODKExternalSensor(id,sensorDriver,channelManagers.get(driver.getCommunicationChannelType()), driver.getReadingUiIntentStr(), driver.getConfigUiIntentStr());			
+			sensorFacade = new ODKExternalSensor(id, appName, sensorDriver,channelManagers.get(driver.getCommunicationChannelType()), driver.getReadingUiIntentStr(), driver.getConfigUiIntentStr());
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
@@ -177,6 +178,8 @@ public class ODKSensorManager {
 		driverTypes = allDrivers;
 	}
 	
+
+
 	public DriverType getDriverType(String type) {
 		DriverType foundDriverType = null;
 		for(DriverType driverType : driverTypes) {
@@ -200,16 +203,16 @@ public class ODKSensorManager {
 	 */
 
 	public SensorStateMachine getSensorState(String id) {		
-		Log.d(TAG,"getting sensor state");
+		Log.d(LOGTAG,"getting sensor state");
 		ODKSensor sensor = sensors.get(id);
 		if (sensor == null) {
-			Log.e(TAG, "Can't find sensor type");
+			Log.e(LOGTAG, "Can't find sensor type");
 			return null;
 		}
 		
 		ChannelManager cm = channelManagers.get(sensor.getCommunicationChannelType());		
 		if (cm == null) {
-			Log.e(TAG, "unkown channel type: " + sensor.getCommunicationChannelType());
+			Log.e(LOGTAG, "unknown channel type: " + sensor.getCommunicationChannelType());
 			return null;
 		}
 		
@@ -221,7 +224,7 @@ public class ODKSensorManager {
 		if (sensor != null) {
 			sensor.addSensorDataPacket(sdp);
 		} else {
-			Log.e(TAG, "can't route data for sensor ID: " + id);
+			Log.e(LOGTAG, "can't route data for sensor ID: " + id);
 		}
 	}
 
@@ -230,18 +233,18 @@ public class ODKSensorManager {
 		((WorkerThread) workerThread).stopthread();				
 	}		
 
-	public boolean addSensor(String id, DriverType driver) {
+	public boolean addSensor(String id, DriverType driver, String appName) {
 
 		if(driver == null) {
 			return false;
 		}
 
-		Log.d(TAG,"sensor type: " + driver);		
-		connectToDriver(id,driver);
+		Log.d(LOGTAG,"sensor type: " + driver);
+		connectToDriver(id, appName, driver);
 	
 		databaseManager.sensorInsert(id, driver.getSensorType(), driver.getSensorType(), 
 				DetailedSensorState.DISCONNECTED, 
-				driver.getCommunicationChannelType());
+				driver.getCommunicationChannelType(), appName);
 		
 		return true;
 	}
