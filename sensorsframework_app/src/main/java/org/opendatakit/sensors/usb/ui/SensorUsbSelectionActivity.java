@@ -74,8 +74,7 @@ public class SensorUsbSelectionActivity extends Activity {
       Intent intent = getIntent();
       String tmpAppName = intent.getStringExtra(ServiceConstants.APP_NAME_KEY);
       if (tmpAppName == null) {
-         // TODO: change to get the default from preferences instead of hardcode
-         appName = ServiceConstants.DEFAULT_APP_NAME;
+         appName = SensorsSingleton.defaultAppName();
       } else {
          appName = tmpAppName;
       }

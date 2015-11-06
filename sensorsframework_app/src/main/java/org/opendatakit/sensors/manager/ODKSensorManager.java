@@ -85,8 +85,15 @@ public class ODKSensorManager {
                try {
                   String id = sensorType.name();
                   //Log.d(LOGTAG,"Found sensor "+ id);
+
+                  String appName = SensorsSingleton.defaultAppName();
+
+                  if (databaseManager.internalSensorMetadataInDb(id)) {
+                     appName = databaseManager.internalSensorAppName(id);
+                  }
+
                   ODKSensor sensor = new ODKBuiltInSensor(sensorType, builtInSensorManager, id,
-                      ServiceConstants.DEFAULT_APP_NAME);
+                      appName);
                   sensors.put(id, sensor);
                } catch (Exception e) {
                   e.printStackTrace();

@@ -210,6 +210,57 @@ public class DatabaseManager {
    }
 
    /**
+    * Query internal sensor app name
+    *
+    * @param id sensor id
+    * @return sensor name
+    */
+   public synchronized String internalSensorAppName(String id) {
+      SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+      String name = "Unknown Name";
+
+      // query columns
+      String[] cols = { InternalSensorTable.ID, InternalSensorTable.APP_NAME };
+      String[] args = { id };
+
+      // run query
+      Cursor cursor = db
+          .query(InternalSensorTable.TABLE_NAME, cols, InternalSensorTable.ID + "=?", args, null,
+              null, null);
+
+      // return first registration state
+      if (cursor.getCount() > 0) {
+         cursor.moveToNext();
+         name = cursor.getString(1);
+      }
+
+      if (name == null) {
+         name = "Unknown Name";
+      }
+      cursor.close();
+      return name;
+   }
+
+   /**
+    * Update existing database app name
+    *
+    * @param id      sensor id
+    * @param appName database app name
+    */
+   public synchronized void internalSensorUpdateAppName(String id, String appName) {
+      SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+
+      // store new column value
+
+      ContentValues values = new ContentValues();
+      values.put(InternalSensorTable.APP_NAME, appName);
+
+      String[] args = { id };
+
+      db.update(InternalSensorTable.TABLE_NAME, values, InternalSensorTable.ID + "=?", args);
+   }
+
+   /**
     * Query list of all internal sensors with metadata
     *
     * @return list of known sensor
@@ -325,6 +376,25 @@ public class DatabaseManager {
 
       ContentValues values = new ContentValues();
       values.put(ExternalSensorTable.NAME, name);
+
+      String[] args = { id };
+
+      db.update(ExternalSensorTable.TABLE_NAME, values, ExternalSensorTable.ID + "=?", args);
+   }
+
+   /**
+    * Update existing database app name
+    *
+    * @param id      sensor id
+    * @param appName database app name
+    */
+   public synchronized void externalSensorUpdateAppName(String id, String appName) {
+      SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+
+      // store new column value
+
+      ContentValues values = new ContentValues();
+      values.put(ExternalSensorTable.APP_NAME, appName);
 
       String[] args = { id };
 

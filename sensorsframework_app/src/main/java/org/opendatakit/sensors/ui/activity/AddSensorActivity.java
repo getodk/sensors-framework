@@ -22,6 +22,7 @@ import android.util.Log;
 import android.view.View;
 import org.opendatakit.sensors.Constants;
 import org.opendatakit.sensors.R;
+import org.opendatakit.sensors.SensorsSingleton;
 import org.opendatakit.sensors.ServiceConstants;
 
 /**
@@ -30,10 +31,10 @@ import org.opendatakit.sensors.ServiceConstants;
  */
 public class AddSensorActivity extends Activity {
 
+   private static final String LOGTAG = AddSensorActivity.class.getSimpleName();
+
    private static final int RESULT_OK_BT = 1;
    private static final int RESULT_OK_USB = 2;
-
-   protected static final String LOGTAG = "AddSensorActivity";
 
    private String appName;
 
@@ -43,8 +44,7 @@ public class AddSensorActivity extends Activity {
       Intent intent = getIntent();
       String tmpAppName = intent.getStringExtra(ServiceConstants.APP_NAME_KEY);
       if (tmpAppName == null) {
-         // TODO: change to get the default from preferences instead of hardcode
-         appName = ServiceConstants.DEFAULT_APP_NAME;
+         appName = SensorsSingleton.defaultAppName();
       } else {
          appName = tmpAppName;
       }

@@ -15,15 +15,10 @@
  */
 package org.opendatakit.sensors.manager;
 
-import java.util.List;
-
-import org.opendatakit.sensors.CommunicationChannelType;
-import org.opendatakit.sensors.ODKSensor;
-import org.opendatakit.sensors.SensorStateMachine;
-import org.opendatakit.sensors.SensorStatus;
-import org.opendatakit.sensors.SensorWorkStatus;
-
 import android.content.Context;
+import org.opendatakit.sensors.*;
+
+import java.util.List;
 
 /**
  * 
@@ -32,8 +27,8 @@ import android.content.Context;
  * 
  */
 public abstract class AbstractChannelManagerBase implements ChannelManager {
-	
-	protected Context mContext;
+
+	 protected Context mContext;
 	protected ODKSensorManager mSensorManager;
 	protected CommunicationChannelType mChannelType;
 	

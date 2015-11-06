@@ -15,6 +15,8 @@
  */
 package org.opendatakit.sensors;
 
+import android.content.Context;
+import android.util.Log;
 import org.opendatakit.sensors.bluetooth.BluetoothManager;
 import org.opendatakit.sensors.exception.CustomUncaughtExceptionHandler;
 import org.opendatakit.sensors.manager.DatabaseManager;
@@ -22,98 +24,103 @@ import org.opendatakit.sensors.manager.ODKSensorManager;
 import org.opendatakit.sensors.tests.DummyManager;
 import org.opendatakit.sensors.usb.USBManager;
 
-import android.content.Context;
-import android.util.Log;
-
 /**
- * 
  * @author wbrunette@gmail.com
  * @author rohitchaudhri@gmail.com
- * 
  */
 public class SensorsSingleton {
 
-	private static final String LOGTAG = "SensorSingleton";
+   private static final String LOGTAG = SensorsSingleton.class.getSimpleName();
 
-	protected static BluetoothManager bluetoothManager = null;
+   private static BluetoothManager bluetoothManager = null;
 
-	protected static USBManager usbManager = null;
+   private static USBManager usbManager = null;
 
-	protected static DummyManager dummyManager = null;
+   private static DummyManager dummyManager = null;
 
-	protected static DatabaseManager dbManager = null;
+   private static DatabaseManager dbManager = null;
 
-	protected static ODKSensorManager sensorManager = null;
+   private static ODKSensorManager sensorManager = null;
 
-	protected static boolean constructed = false;
+   private static boolean constructed = false;
 
-	public synchronized static void construct(Context cxt) {
-		if (constructed) {
-			return;
-		}
+   private static String defaultAppName = null;
 
-		// START CONSTRUCTION
-		Log.d(LOGTAG, "Starting Singleton Construction");
+   public synchronized static void construct(Context cxt) {
+      if (constructed) {
+         return;
+      }
 
-		// create and initialize database
-		dbManager = new DatabaseManager(cxt);
+      // START CONSTRUCTION
+      Log.d(LOGTAG, "Starting Singleton Construction");
 
-		// create communication managers
-		bluetoothManager = new BluetoothManager(cxt);
-		usbManager = new USBManager(cxt);
-		dummyManager = new DummyManager(cxt, dbManager);
-		Thread.setDefaultUncaughtExceptionHandler(new CustomUncaughtExceptionHandler());
+      // create and initialize database
+      dbManager = new DatabaseManager(cxt);
 
-		// create sensor manager
-		sensorManager = new ODKSensorManager(cxt, dbManager, bluetoothManager,
-				usbManager, dummyManager);
+      // create communication managers
+      bluetoothManager = new BluetoothManager(cxt);
+      usbManager = new USBManager(cxt);
+      dummyManager = new DummyManager(cxt, dbManager);
+      Thread.setDefaultUncaughtExceptionHandler(new CustomUncaughtExceptionHandler());
 
-		// provide reference to the sensor manager
-		bluetoothManager.setSensorManager(sensorManager);
-		usbManager.setSensorManager(sensorManager);
-		dummyManager.setSensorManager(sensorManager);
+      // create sensor manager
+      sensorManager = new ODKSensorManager(cxt, dbManager, bluetoothManager, usbManager,
+          dummyManager);
 
-		// try to connect to registered sensors
-		sensorManager.initializeRegisteredSensors();
+      // provide reference to the sensor manager
+      bluetoothManager.setSensorManager(sensorManager);
+      usbManager.setSensorManager(sensorManager);
+      dummyManager.setSensorManager(sensorManager);
 
-		// start communication managers
-		bluetoothManager.initializeSensors();
-		usbManager.initializeSensors();
-		dummyManager.initializeSensors();
+      // try to connect to registered sensors
+      sensorManager.initializeRegisteredSensors();
 
-		// UPDATE STATE AFTER CONSTRUCTION COMPLETES
-		constructed = true;
-		;
-		Log.d(LOGTAG, "Ending Singleton Construction");
-	}
+      // start communication managers
+      bluetoothManager.initializeSensors();
+      usbManager.initializeSensors();
+      dummyManager.initializeSensors();
 
-	public static void destroy() {
-		dbManager = null;
-		bluetoothManager = null;
-		usbManager = null;
-		dummyManager = null;
-		constructed = false;
-		System.gc();
-	}
+      // UPDATE STATE AFTER CONSTRUCTION COMPLETES
+      constructed = true;
 
-	public static BluetoothManager getBluetoothManager() {
-		return bluetoothManager;
-	}
+      Log.d(LOGTAG, "Ending Singleton Construction");
+   }
 
-	public static USBManager getUSBManager() {
-		return usbManager;
-	}
+   public static void destroy() {
+      dbManager = null;
+      bluetoothManager = null;
+      usbManager = null;
+      dummyManager = null;
+      constructed = false;
+      System.gc();
+   }
 
-	public static DatabaseManager getDatabaseManager() {
-		return dbManager;
-	}
+   public static BluetoothManager getBluetoothManager() {
+      return bluetoothManager;
+   }
 
-	public static ODKSensorManager getSensorManager() {
-		return sensorManager;
-	}
+   public static USBManager getUSBManager() {
+      return usbManager;
+   }
 
-	public static DummyManager getDummyManager() {
-		return dummyManager;
-	}
+   public static DatabaseManager getDatabaseManager() {
+      return dbManager;
+   }
+
+   public static ODKSensorManager getSensorManager() {
+      return sensorManager;
+   }
+
+   public static DummyManager getDummyManager() {
+      return dummyManager;
+   }
+
+   public static String defaultAppName() {
+      if (defaultAppName == null) {
+         // TODO: get the default appName from external preferences (TO BE DECIDED)
+         defaultAppName = ServiceConstants.DEFAULT_APP_NAME;
+      }
+      return defaultAppName;
+   }
 
 }

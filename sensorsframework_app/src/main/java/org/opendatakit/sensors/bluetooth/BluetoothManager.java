@@ -22,7 +22,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
-
 import org.opendatakit.sensors.CommunicationChannelType;
 import org.opendatakit.sensors.DriverType;
 import org.opendatakit.sensors.ODKSensor;
@@ -32,12 +31,7 @@ import org.opendatakit.sensors.manager.DetailedSensorState;
 import org.opendatakit.sensors.manager.DiscoverableDevice;
 import org.opendatakit.sensors.manager.SensorNotFoundException;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 
@@ -48,7 +42,7 @@ import java.util.Set;
 public class BluetoothManager extends AbstractChannelManagerBase {
 
 	// logging
-	private static final String LOGTAG = "BTManager";
+	private static final String LOGTAG = BluetoothManager.class.getSimpleName();
 
 	// bluetooth
 	private BluetoothAdapter mBtAdapter;

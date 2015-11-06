@@ -16,7 +16,6 @@
 package org.opendatakit.sensors;
 
 import android.os.Bundle;
-
 import org.opendatakit.sensors.manager.SensorNotFoundException;
 
 import java.util.List;
@@ -73,13 +72,14 @@ public interface ODKSensor {
 	public abstract String getReadingUiIntentStr();
 
 	public abstract String getConfigUiIntentStr();
-	
-	public abstract String getAppNameForDatabase();
 
 	public abstract boolean hasReadingUi();
 
 	public abstract boolean hasConfigUi();
-	
+
+	 public abstract String getAppNameForDatabase();
+
 	public abstract boolean hasAppNameForDatabase();
 
+	 public abstract void setAppNameForDatabase(String appName);
 }

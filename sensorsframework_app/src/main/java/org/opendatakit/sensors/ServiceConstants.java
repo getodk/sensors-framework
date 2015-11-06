@@ -29,21 +29,20 @@ package org.opendatakit.sensors;
 
 /**
  * Contains various constants used to interface with the service, intents and broadcasts.
- * 
+ *
  * @author wbrunette@gmail.com
  * @author rohitchaudhri@gmail.com
- * 
  */
 public class ServiceConstants {
 
-	public static final String UNKNOWN = "unknown";
+   public static final String UNKNOWN = "unknown";
 
-	public static final String DEFAULT_APP_NAME = "TABLES";
+   public static final String DEFAULT_APP_NAME = "TABLES";
 
-	// Intent/Broadcast Receiver Bundle Keys
-	public static final String BT_STATE_CHANGE = "bt_state_change";
-	public static final String USB_STATE_CHANGE = "usb_state_change";
-	public static final String ACTION_SCAN_FINISHED = "action_scan_finished";
+   // Intent/Broadcast Receiver Bundle Keys
+   public static final String BT_STATE_CHANGE = "bt_state_change";
+   public static final String USB_STATE_CHANGE = "usb_state_change";
+   public static final String ACTION_SCAN_FINISHED = "action_scan_finished";
 
-	 public static final String APP_NAME_KEY = "app_name_key";
+   public static final String APP_NAME_KEY = "app_name_key";
 }
