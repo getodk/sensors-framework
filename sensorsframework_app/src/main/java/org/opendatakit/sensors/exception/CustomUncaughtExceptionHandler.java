@@ -27,7 +27,7 @@ public class CustomUncaughtExceptionHandler implements Thread.UncaughtExceptionH
 
 	@Override
 	public void uncaughtException(Thread thread, Throwable ex) {
-		Log.e("UncaughtExceptionHandler", "Uncaught exception:  " + ex.getMessage());
+		Log.e("CustomUncaughtExHandler", "Uncaught exception:  " + ex.getMessage());
 		ex.printStackTrace();
 		System.exit(0);				
 	}
