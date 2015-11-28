@@ -1,0 +1,6 @@
+# AndroidStudio/Gradle files
+build
+.gradle
+.idea
+local.properties
+*.iml
