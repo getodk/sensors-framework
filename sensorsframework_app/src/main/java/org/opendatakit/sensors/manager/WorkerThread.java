@@ -296,7 +296,7 @@ public class WorkerThread extends Thread {
         if (rowId == null) {
           rowId = ODKDataUtils.genUUID();
         }
-        getDatabase().insertDataIntoExistingDBTableWithId(aSensor.getAppNameForDatabase(), db, tableId, orderedDefs,
+        getDatabase().insertRowWithId(aSensor.getAppNameForDatabase(), db, tableId, orderedDefs,
             tablesValues, rowId);
       }
     } catch (Exception e) {
