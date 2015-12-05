@@ -1,11 +1,13 @@
 gradle.ext.gradleConfigVersion = 14
 
-if ( !gradle.ext.has('workspacePath') ) {
-	def env = System.getProperties();
-	logger.warn("sensors/settings.gradle System.getProperties().stringPropertyNames(): " + env.stringPropertyNames());
+if (!gradle.ext.has('workspacePath')) {
+    def env = System.getProperties();
+    logger.warn("sensors/settings.gradle System.getProperties().stringPropertyNames(): " + env
+            .stringPropertyNames());
     def path = System.getProperty('com.android.studio.gradle.project.path');
-    if ( path != null ) {
-        logger.warn("sensors/settings.gradle Found value for System.getProperty('com.android.studio.gradle.project.path')");
+    if (path != null) {
+        logger.warn("sensors/settings.gradle Found value for System.getProperty('com.android" +
+                ".studio.gradle.project.path')");
         gradle.ext.workspacePath = (new File(path)).getParentFile().getAbsolutePath();
     } else {
         logger.warn("sensors/settings.gradle No value found for System.getProperty('com.android.studio.gradle.project.path')");
@@ -31,9 +33,14 @@ settingsScripts.each {
     apply from: it
 }
 
-include(sensorsProjectChild)
+include(sensorsFrameworkProjectChild)
+include(sensorsInterfacesProjectChild)
+//include(sensorsInterfacesProjectName)
+//project(sensorsInterfacesProjectName).setProjectDir(sensorsInterfacesProjectPath)
 
-if (libraryProjectPath.exists() && gradle.ext.useLocal) { // check if local library project is present
+
+if (libraryProjectPath.exists() && gradle.ext.useLocal) {
+    // check if local library project is present
     include libraryProjectName
     project(libraryProjectName).setProjectDir(libraryProjectPath) // set local location
 }
@@ -47,3 +54,4 @@ if (playServicesPath.exists() && gradle.ext.useLocal) { // check if local common
     include playServicesName
     project(playServicesName).setProjectDir(playServicesPath) // set local location
 }
+
