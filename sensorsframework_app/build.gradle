@@ -28,10 +28,6 @@ android {
 
 //        multiDexEnabled true
     }
-
-	jacoco {
-        version = jacocoVersionName
-    }
 	
     buildTypes {
         release {
