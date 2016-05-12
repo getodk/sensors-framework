@@ -40,6 +40,7 @@ import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKJsonNames;
 import org.opendatakit.database.DatabaseConsts;
+import org.opendatakit.database.OdkDbSerializedInterface;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.database.service.OdkDbInterface;
 import org.opendatakit.sensors.DataSeries;
@@ -63,7 +64,7 @@ public class WorkerThread extends Thread {
   private Context serviceContext;
   private ODKSensorManager sensorManager;
   private ServiceConnectionWrapper databaseServiceConnection = null;
-  private OdkDbInterface databaseService = null;
+  private OdkDbSerializedInterface databaseService = null;
   
   /**
    * Wrapper class for service activation management.
@@ -125,11 +126,16 @@ public class WorkerThread extends Thread {
 
     if (className.getClassName().equals(DatabaseConsts.DATABASE_SERVICE_CLASS)) {
       Log.i(TAG, "Bound to Database service");
-      databaseService = OdkDbInterface.Stub.asInterface(service);
+
+      try {
+        databaseService = new OdkDbSerializedInterface(OdkDbInterface.Stub.asInterface(service));
+      } catch (IllegalArgumentException e) {
+        databaseService = null;
+      }
     }
   }
 
-  public OdkDbInterface getDatabase() {
+  public OdkDbSerializedInterface getDatabase() {
     return databaseService;
   }
 
