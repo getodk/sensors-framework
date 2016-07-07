@@ -120,13 +120,13 @@ dependencies {
     if (sensorsInterfaceProjectPath.exists() && gradle.useLocal) { // Local project is favoured
         compile project(sensorsInterfaceProjectName)
     } else {
-        demoCompile(group: groupId, name: sensorsInterfaceArtifactName, classifier: snapshotRelease,
+        demoCompile(group: groupId, name: sensorsInterfaceSnapshotArtifactName, classifier: snapshotRelease,
                 version: latestVersion, ext: 'aar')
-        masterCompile(group: groupId, name: sensorsInterfaceArtifactName, classifier: snapshotRelease,
+        masterCompile(group: groupId, name: sensorsInterfaceSnapshotArtifactName, classifier: snapshotRelease,
                 version: latestVersion, ext: 'aar')
-        snapshotCompile(group: groupId, name: sensorsInterfaceArtifactName,
+        snapshotCompile(group: groupId, name: sensorsInterfaceSnapshotArtifactName,
                 classifier: snapshotRelease, version: latestVersion, ext: 'aar')
-        uitestCompile(group: groupId, name: sensorsInterfaceArtifactName,
+        uitestCompile(group: groupId, name: sensorsInterfaceSnapshotArtifactName,
                 classifier: snapshotRelease, version: latestVersion, ext: 'aar')
     }
 
