@@ -1,4 +1,4 @@
-gradle.ext.gradleConfigVersion = 49
+gradle.ext.gradleConfigVersion = 50
 
 if (!gradle.ext.has('workspacePath')) {
     def env = System.getProperties();
@@ -33,8 +33,8 @@ settingsScripts.each {
     apply from: it
 }
 
+
 include(sensorsFrameworkProjectChild)
-include(sensorsInterfacesProjectChild)
 
 if (libraryProjectPath.exists() && gradle.ext.useLocal) {
     // check if local library project is present
@@ -45,4 +45,9 @@ if (libraryProjectPath.exists() && gradle.ext.useLocal) {
 if (commonProjectPath.exists() && gradle.ext.useLocal) { // check if local common project is present
     include commonProjectName
     project(commonProjectName).setProjectDir(commonProjectPath) // set local location
+}
+
+if (sensorsInterfaceProjectPath.exists() && gradle.ext.useLocal) {
+    include sensorsInterfaceProjectName
+    project(sensorsInterfaceProjectName).setProjectDir(sensorsInterfaceProjectPath)
 }
