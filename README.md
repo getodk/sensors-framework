@@ -1,4 +1,4 @@
-# opendatakit.sensors
+# opendatakit.sensorsframework
 
 This project is __*actively maintained*__
 
