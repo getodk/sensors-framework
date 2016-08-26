@@ -20,15 +20,12 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.database.SQLException;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.RemoteException;
 import android.util.Log;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
@@ -36,6 +33,7 @@ import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.ColumnList;
 import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKJsonNames;
@@ -302,16 +300,20 @@ public class WorkerThread extends Thread {
         if (rowId == null) {
           rowId = ODKDataUtils.genUUID();
         }
-        getDatabase().insertRowWithId(aSensor.getAppNameForDatabase(), db, tableId, orderedDefs,
-            tablesValues, rowId);
+        // don't require current user to have appropriate privileges to insert data
+        getDatabase().privilegedInsertRowWithId(aSensor.getAppNameForDatabase(), db, tableId,
+            orderedDefs,
+            tablesValues, rowId, true);
       }
+    } catch (ServicesAvailabilityException e) {
+      e.printStackTrace();
     } catch (Exception e) {
       e.printStackTrace();
     } finally {
       if (db != null) {
         try {
           getDatabase().closeDatabase(aSensor.getAppNameForDatabase(), db);
-        } catch (RemoteException e) {
+        } catch (ServicesAvailabilityException e) {
           e.printStackTrace();
         }
       }
