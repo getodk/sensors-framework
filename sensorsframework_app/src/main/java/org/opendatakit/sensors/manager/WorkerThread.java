@@ -30,17 +30,17 @@ import org.json.JSONObject;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.ColumnList;
-import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.database.data.ColumnDefinition;
+import org.opendatakit.common.android.database.data.ColumnList;
+import org.opendatakit.common.android.database.data.OrderedColumns;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.utilities.ODKDataUtils;
+import org.opendatakit.common.android.utilities.LocalizationUtils;
 import org.opendatakit.common.android.utilities.ODKJsonNames;
-import org.opendatakit.database.DatabaseConsts;
-import org.opendatakit.database.OdkDbSerializedInterface;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.database.service.OdkDbInterface;
+import org.opendatakit.common.android.database.DatabaseConstants;
+import org.opendatakit.common.android.database.service.UserDbInterface;
+import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.common.android.database.service.AidlDbInterface;
 import org.opendatakit.sensors.DataSeries;
 import org.opendatakit.sensors.DriverType;
 import org.opendatakit.sensors.ODKSensor;
@@ -62,7 +62,7 @@ public class WorkerThread extends Thread {
   private Context serviceContext;
   private ODKSensorManager sensorManager;
   private ServiceConnectionWrapper databaseServiceConnection = null;
-  private OdkDbSerializedInterface databaseService = null;
+  private UserDbInterface databaseService = null;
   
   /**
    * Wrapper class for service activation management.
@@ -109,8 +109,8 @@ public class WorkerThread extends Thread {
         Log.i(TAG, "Attempting bind to Database service");
         databaseServiceConnection = new ServiceConnectionWrapper();
         Intent bind_intent = new Intent();
-        bind_intent.setClassName(DatabaseConsts.DATABASE_SERVICE_PACKAGE,
-            DatabaseConsts.DATABASE_SERVICE_CLASS);
+        bind_intent.setClassName(DatabaseConstants.DATABASE_SERVICE_PACKAGE,
+            DatabaseConstants.DATABASE_SERVICE_CLASS);
         serviceContext.bindService(
             bind_intent,
             databaseServiceConnection,
@@ -122,24 +122,24 @@ public class WorkerThread extends Thread {
   
   private void doServiceConnected(ComponentName className, IBinder service) {
 
-    if (className.getClassName().equals(DatabaseConsts.DATABASE_SERVICE_CLASS)) {
+    if (className.getClassName().equals(DatabaseConstants.DATABASE_SERVICE_CLASS)) {
       Log.i(TAG, "Bound to Database service");
 
       try {
-        databaseService = new OdkDbSerializedInterface(OdkDbInterface.Stub.asInterface(service));
+        databaseService = new UserDbInterface(AidlDbInterface.Stub.asInterface(service));
       } catch (IllegalArgumentException e) {
         databaseService = null;
       }
     }
   }
 
-  public OdkDbSerializedInterface getDatabase() {
+  public UserDbInterface getDatabase() {
     return databaseService;
   }
 
   private void doServiceDisconnected(ComponentName className) {
 
-    if (className.getClassName().equals(DatabaseConsts.DATABASE_SERVICE_CLASS)) {
+    if (className.getClassName().equals(DatabaseConstants.DATABASE_SERVICE_CLASS)) {
       if (!isRunning) {
         Log.i(TAG, "Unbound from Database service (intentionally)");
       } else {
@@ -211,7 +211,7 @@ public class WorkerThread extends Thread {
       Bundle dataBundle) {
 
     ContentValues tablesValues = new ContentValues();
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = getDatabase().openDatabase(aSensor.getAppNameForDatabase());
 
@@ -298,7 +298,7 @@ public class WorkerThread extends Thread {
         String rowId = tablesValues.containsKey(DataTableColumns.ID) ? tablesValues
             .getAsString(DataTableColumns.ID) : null;
         if (rowId == null) {
-          rowId = ODKDataUtils.genUUID();
+          rowId = LocalizationUtils.genUUID();
         }
         // don't require current user to have appropriate privileges to insert data
         getDatabase().privilegedInsertRowWithId(aSensor.getAppNameForDatabase(), db, tableId,

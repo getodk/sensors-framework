@@ -20,9 +20,9 @@ import android.util.Log;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.common.android.data.ColumnList;
+import org.opendatakit.common.android.database.data.ColumnList;
 import org.opendatakit.common.android.utilities.ODKJsonNames;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.database.service.DbHandle;
 import org.opendatakit.sensors.*;
 import org.opendatakit.sensors.bluetooth.BluetoothManager;
 import org.opendatakit.sensors.builtin.BuiltInSensorType;
@@ -189,7 +189,7 @@ public class ODKSensorManager {
       driverTypes = allDrivers;
    }
 
-   public void parseDriverTableDefintionAndCreateTable(WorkerThread worker, OdkDbHandle db,
+   public void parseDriverTableDefintionAndCreateTable(WorkerThread worker, DbHandle db,
        String sensorId) {
       String strTableDef = null;
       String appName = null;
