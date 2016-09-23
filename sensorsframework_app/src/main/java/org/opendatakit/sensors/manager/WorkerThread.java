@@ -30,17 +30,18 @@ import org.json.JSONObject;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.common.android.database.data.ColumnDefinition;
-import org.opendatakit.common.android.database.data.ColumnList;
-import org.opendatakit.common.android.database.data.OrderedColumns;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.utilities.LocalizationUtils;
-import org.opendatakit.common.android.utilities.ODKJsonNames;
-import org.opendatakit.common.android.database.DatabaseConstants;
-import org.opendatakit.common.android.database.service.UserDbInterface;
-import org.opendatakit.common.android.database.service.DbHandle;
-import org.opendatakit.common.android.database.service.AidlDbInterface;
+import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.data.ColumnList;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.provider.DataTableColumns;
+import org.opendatakit.utilities.LocalizationUtils;
+import org.opendatakit.utilities.ODKJsonNames;
+import org.opendatakit.database.DatabaseConstants;
+import org.opendatakit.database.service.UserDbInterface;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.AidlDbInterface;
 import org.opendatakit.sensors.DataSeries;
 import org.opendatakit.sensors.DriverType;
 import org.opendatakit.sensors.ODKSensor;
@@ -109,8 +110,8 @@ public class WorkerThread extends Thread {
         Log.i(TAG, "Attempting bind to Database service");
         databaseServiceConnection = new ServiceConnectionWrapper();
         Intent bind_intent = new Intent();
-        bind_intent.setClassName(DatabaseConstants.DATABASE_SERVICE_PACKAGE,
-            DatabaseConstants.DATABASE_SERVICE_CLASS);
+        bind_intent.setClassName(IntentConsts.Database.DATABASE_SERVICE_PACKAGE,
+                IntentConsts.Database.DATABASE_SERVICE_CLASS);
         serviceContext.bindService(
             bind_intent,
             databaseServiceConnection,
@@ -122,7 +123,7 @@ public class WorkerThread extends Thread {
   
   private void doServiceConnected(ComponentName className, IBinder service) {
 
-    if (className.getClassName().equals(DatabaseConstants.DATABASE_SERVICE_CLASS)) {
+    if (className.getClassName().equals(IntentConsts.Database.DATABASE_SERVICE_CLASS)) {
       Log.i(TAG, "Bound to Database service");
 
       try {
@@ -139,7 +140,7 @@ public class WorkerThread extends Thread {
 
   private void doServiceDisconnected(ComponentName className) {
 
-    if (className.getClassName().equals(DatabaseConstants.DATABASE_SERVICE_CLASS)) {
+    if (className.getClassName().equals(IntentConsts.Database.DATABASE_SERVICE_CLASS)) {
       if (!isRunning) {
         Log.i(TAG, "Unbound from Database service (intentionally)");
       } else {
