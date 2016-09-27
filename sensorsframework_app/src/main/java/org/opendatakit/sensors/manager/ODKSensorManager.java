@@ -237,7 +237,7 @@ public class ODKSensorManager {
          // Create the table for driver
 
          ColumnList cols = new ColumnList(columns);
-         worker.getDatabase().createOrOpenDBTableWithColumns(appName, db, tableId, cols);
+         worker.getDatabase().createOrOpenTableWithColumns(appName, db, tableId, cols);
 
       } catch (Exception e) {
          e.printStackTrace();
