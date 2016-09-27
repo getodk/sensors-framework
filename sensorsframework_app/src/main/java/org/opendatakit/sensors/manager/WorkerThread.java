@@ -250,7 +250,7 @@ public class WorkerThread extends Thread {
 
          // Create the table for driver
          ColumnList cols = new ColumnList(columns);
-         orderedDefs = getDatabase().createOrOpenDBTableWithColumns(aSensor.getAppNameForDatabase()
+         orderedDefs = getDatabase().createOrOpenTableWithColumns(aSensor.getAppNameForDatabase()
              , db, tableId, cols);
       } else {
          orderedDefs = getDatabase().getUserDefinedColumns(aSensor.getAppNameForDatabase(), db, tableId);
