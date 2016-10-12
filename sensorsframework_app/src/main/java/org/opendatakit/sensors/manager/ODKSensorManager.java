@@ -17,21 +17,16 @@ package org.opendatakit.sensors.manager;
 
 import android.content.Context;
 import android.util.Log;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.database.data.ColumnList;
-import org.opendatakit.utilities.ODKJsonNames;
-import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.sensors.*;
 import org.opendatakit.sensors.bluetooth.BluetoothManager;
 import org.opendatakit.sensors.builtin.BuiltInSensorType;
 import org.opendatakit.sensors.builtin.ODKBuiltInSensor;
 import org.opendatakit.sensors.drivers.ManifestMetadata;
-import org.opendatakit.sensors.tests.DummyManager;
+import org.opendatakit.sensors.dummy.DummyManager;
 import org.opendatakit.sensors.usb.USBManager;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author wbrunette@gmail.com
@@ -52,15 +47,18 @@ public class ODKSensorManager {
    public ODKSensorManager(Context context, DatabaseManager dbManager, BluetoothManager btManager,
        USBManager usbManager, DummyManager dummyManager) {
 
-      svcContext = context;
+      this.svcContext = context;
       this.databaseManager = dbManager;
 
-      sensors = new Hashtable<String, ODKSensor>();
+      sensors = new ConcurrentHashMap<String, ODKSensor>();
       channelManagers = new HashMap<CommunicationChannelType, ChannelManager>();
 
       channelManagers.put(btManager.getCommChannelType(), btManager);
       channelManagers.put(usbManager.getCommChannelType(), usbManager);
-      channelManagers.put(dummyManager.getCommChannelType(), dummyManager);
+
+      if (SensorsSingleton.DEBUG) {
+         channelManagers.put(dummyManager.getCommChannelType(), dummyManager);
+      }
 
       queryNupdateSensorDriverTypes();
 
@@ -87,14 +85,17 @@ public class ODKSensorManager {
                   //Log.d(LOGTAG,"Found sensor "+ id);
 
                   String appName = SensorsSingleton.defaultAppName();
-
+                  boolean dbTransfer = false;
                   if (databaseManager.internalSensorMetadataInDb(id)) {
-                     appName = databaseManager.internalSensorAppName(id);
+                     InternalSensorMetadata dbData = databaseManager.getInternalSensorDataForId
+                         (id);
+                     appName = dbData.appName;
+                     dbTransfer = dbData.dbTransfer;
                   }
 
                   ODKSensor sensor = new ODKBuiltInSensor(sensorType, builtInSensorManager, id,
-                      appName);
-                  sensors.put(id, sensor);
+                      appName, dbTransfer);
+                  addInternalSensor(id, sensor);
                } catch (Exception e) {
                   e.printStackTrace();
                }
@@ -119,7 +120,8 @@ public class ODKSensorManager {
                    " driverType: " + externalSensorData.type + " state "
                    + externalSensorData.state);
 
-               if (connectToDriver(externalSensorData.id, externalSensorData.appName, driverType)) {
+               if (connectToDriver(externalSensorData.id, externalSensorData.appName,
+                   externalSensorData.dbTransfer, driverType)) {
                   Log.d(LOGTAG,
                       externalSensorData.id + " connected to driver " + externalSensorData.type);
 
@@ -144,13 +146,14 @@ public class ODKSensorManager {
       }
    }
 
-   private boolean connectToDriver(String id, String appName, DriverType driver) {
+   private boolean connectToDriver(String id, String appName, boolean dbTransfer, DriverType
+       driver) {
       // create the sensor
       ODKExternalSensor sensorFacade = null;
       try {
          DriverCommunicator sensorDriver = new GenericDriverProxy(driver.getSensorPackageName(),
              driver.getSensorDriverAddress(), this.svcContext);
-         sensorFacade = new ODKExternalSensor(id, appName, sensorDriver,
+         sensorFacade = new ODKExternalSensor(id, appName, dbTransfer, sensorDriver,
              channelManagers.get(driver.getCommunicationChannelType()),
              driver.getReadingUiIntentStr(), driver.getConfigUiIntentStr());
       } catch (Exception e) {
@@ -177,71 +180,20 @@ public class ODKSensorManager {
       List<DriverType> btDrivers = SensorDriverDiscovery
           .getAllDriversForChannel(svcContext, CommunicationChannelType.BLUETOOTH,
               ManifestMetadata.FRAMEWORK_VERSION_2);
+      allDrivers.addAll(btDrivers);
+
       List<DriverType> usbDrivers = SensorDriverDiscovery
           .getAllDriversForChannel(svcContext, CommunicationChannelType.USB,
               ManifestMetadata.FRAMEWORK_VERSION_2);
-      List<DriverType> dummyDrivers = SensorDriverDiscovery
-          .getAllDriversForChannel(svcContext, CommunicationChannelType.DUMMY,
-              ManifestMetadata.FRAMEWORK_VERSION_2);
-      allDrivers.addAll(btDrivers);
       allDrivers.addAll(usbDrivers);
-      allDrivers.addAll(dummyDrivers);
+
+      if (SensorsSingleton.DEBUG) {
+         List<DriverType> dummyDrivers = SensorDriverDiscovery
+             .getAllDriversForChannel(svcContext, CommunicationChannelType.DUMMY,
+                 ManifestMetadata.FRAMEWORK_VERSION_2);
+         allDrivers.addAll(dummyDrivers);
+      }
       driverTypes = allDrivers;
-   }
-
-   public void parseDriverTableDefintionAndCreateTable(WorkerThread worker, DbHandle db,
-       String sensorId) {
-      String strTableDef = null;
-      String appName = null;
-
-      // Get the sensor information from the database
-      ExternalSensorData externalSensorDataFromDb;
-      if (databaseManager.externalSensorIsInDatabase(sensorId)) {
-         externalSensorDataFromDb = databaseManager.getExternalSensorDataForId(sensorId);
-         DriverType driver = getDriverType(externalSensorDataFromDb.type);
-         appName = externalSensorDataFromDb.appName;
-         if (driver != null) {
-            strTableDef = driver.getTableDefinitionStr();
-         }
-      }
-
-      if (strTableDef == null || appName == null) {
-         return;
-      }
-
-      JSONObject jsonTableDef = null;
-
-      try {
-
-         jsonTableDef = new JSONObject(strTableDef);
-
-         JSONObject theTableDef = jsonTableDef.getJSONObject(ODKJsonNames.jsonTableStr);
-
-         String tableId = theTableDef.getString(ODKJsonNames.jsonTableIdStr);
-
-         List<Column> columns = new ArrayList<Column>();
-
-         // Create the columns for the driver table
-         JSONArray colJsonArray = theTableDef.getJSONArray(ODKJsonNames.jsonColumnsStr);
-
-         for (int i = 0; i < colJsonArray.length(); i++) {
-            JSONObject colJson = colJsonArray.getJSONObject(i);
-            String elementKey = colJson.getString(ODKJsonNames.jsonElementKeyStr);
-            String elementName = colJson.getString(ODKJsonNames.jsonElementNameStr);
-            String elementType = colJson.getString(ODKJsonNames.jsonElementTypeStr);
-            String listChildElementKeys = colJson
-                .getString(ODKJsonNames.jsonListChildElementKeysStr);
-            columns.add(new Column(elementKey, elementName, elementType, listChildElementKeys));
-         }
-
-         // Create the table for driver
-
-         ColumnList cols = new ColumnList(columns);
-         worker.getDatabase().createOrOpenDBTableWithColumns(appName, db, tableId, cols);
-
-      } catch (Exception e) {
-         e.printStackTrace();
-      }
    }
 
    public DriverType getDriverType(String type) {
@@ -274,6 +226,11 @@ public class ODKSensorManager {
          return null;
       }
 
+      if(sensor instanceof ODKBuiltInSensor) {
+         ODKBuiltInSensor builtInSensor = (ODKBuiltInSensor) sensor;
+         return builtInSensor.getSensorState();
+      }
+
       ChannelManager cm = channelManagers.get(sensor.getCommunicationChannelType());
       if (cm == null) {
          Log.e(LOGTAG, "unknown channel type: " + sensor.getCommunicationChannelType());
@@ -297,26 +254,36 @@ public class ODKSensorManager {
       ((WorkerThread) workerThread).stopthread();
    }
 
-   public boolean addSensor(String id, DriverType driver, String appName) {
+   public boolean addSensor(String id, DriverType driver, String appName, boolean
+       transferDataToDb) {
 
       if (driver == null) {
          return false;
       }
 
       Log.d(LOGTAG, "sensor type: " + driver);
-      connectToDriver(id, appName, driver);
+      connectToDriver(id, appName, transferDataToDb, driver);
 
       databaseManager.insertExternalSensor(id, driver.getSensorType(), driver.getSensorType(),
-          DetailedSensorState.DISCONNECTED, driver.getCommunicationChannelType(), appName);
+          DetailedSensorState.DISCONNECTED, driver.getCommunicationChannelType(), appName, transferDataToDb);
 
       return true;
    }
 
-   public List<ODKSensor> getSensorsUsingAppForDatabase() {
+   public boolean addInternalSensor(String id, ODKSensor sensor) {
+      if(id == null || sensor == null)
+         return false;
+
+      sensors.put(id, sensor);
+
+      return true;
+   }
+
+   public List<ODKSensor> getSensorsToTransferToDb() {
       List<ODKSensor> sensorList = new ArrayList<ODKSensor>();
 
       for (ODKSensor sensor : sensors.values()) {
-         if (sensor.hasAppNameForDatabase()) {
+         if (sensor.transferDataToDb() && sensor.hasAppNameForDatabase()) {
             sensorList.add(sensor);
          }
       }

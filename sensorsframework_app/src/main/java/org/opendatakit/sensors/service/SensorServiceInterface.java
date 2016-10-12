@@ -23,7 +23,7 @@ import org.opendatakit.sensors.*;
 import org.opendatakit.sensors.bluetooth.BluetoothManager;
 import org.opendatakit.sensors.manager.ODKSensorManager;
 import org.opendatakit.sensors.manager.SensorNotFoundException;
-import org.opendatakit.sensors.tests.DummyManager;
+import org.opendatakit.sensors.dummy.DummyManager;
 import org.opendatakit.sensors.usb.USBManager;
 
 import java.util.ArrayList;
@@ -35,16 +35,12 @@ import java.util.List;
  */
 public class SensorServiceInterface extends ODKSensorService.Stub {
 
-   private final String TAG = "SensorServiceInterface";
+   private static final String TAG = SensorServiceInterface.class.getSimpleName();
+
    private ODKSensorManager mSensorManager;
    private DummyManager mDummyManager;
    private USBManager mUsbManager;
    private BluetoothManager mBtManager;
-
-   private boolean traceStarted = false;
-   private int callsToGetData = 0;
-   private boolean traceStopped = false;
-   private boolean DEBUG = false;
 
    public SensorServiceInterface(ODKSensorManager manager, BluetoothManager btManager,
        USBManager usbManager, DummyManager dummyManager) {
@@ -72,19 +68,6 @@ public class SensorServiceInterface extends ODKSensorService.Stub {
 
    public List<Bundle> getSensorData(String id, long maxNumReadings) throws RemoteException {
       List<Bundle> dataFmSensor = new ArrayList<Bundle>();
-      if (DEBUG) {
-         if (!traceStarted) {
-            Debug.startMethodTracing("getSensorData");
-            traceStarted = true;
-         }
-
-         if (callsToGetData > 20 && !traceStopped) {
-            Debug.stopMethodTracing();
-            traceStopped = true;
-         }
-
-         callsToGetData++;
-      }
 
       ODKSensor sensor = mSensorManager.getSensor(id);
 
@@ -92,8 +75,6 @@ public class SensorServiceInterface extends ODKSensorService.Stub {
          dataFmSensor = sensor.getSensorData(maxNumReadings);
       }
 
-      if (DEBUG)
-         Debug.stopMethodTracing();
       return dataFmSensor;
    }
 

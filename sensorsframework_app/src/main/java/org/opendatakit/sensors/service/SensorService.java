@@ -19,7 +19,7 @@ import org.opendatakit.sensors.SensorsSingleton;
 import org.opendatakit.sensors.bluetooth.BluetoothManager;
 import org.opendatakit.sensors.manager.DatabaseManager;
 import org.opendatakit.sensors.manager.ODKSensorManager;
-import org.opendatakit.sensors.tests.DummyManager;
+import org.opendatakit.sensors.dummy.DummyManager;
 import org.opendatakit.sensors.usb.USBManager;
 
 import android.app.Service;

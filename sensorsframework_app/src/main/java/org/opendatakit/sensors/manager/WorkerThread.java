@@ -175,7 +175,7 @@ public class WorkerThread extends Thread {
   
       while (isRunning && (getDatabase() != null)) {
         try {
-          for (ODKSensor sensor : sensorManager.getSensorsUsingAppForDatabase()) {
+          for (ODKSensor sensor : sensorManager.getSensorsToTransferToDb()) {
             moveSensorDataToDB(sensor);
           }
   

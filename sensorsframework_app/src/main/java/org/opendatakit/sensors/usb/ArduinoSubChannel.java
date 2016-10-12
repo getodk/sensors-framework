@@ -299,7 +299,7 @@ public class ArduinoSubChannel implements USBCommSubChannel, Runnable {
 			if(mSensorManager.getSensor(id_to_add) != null) 
 				return true;
 			// Need to add the sensor
-			if(mSensorManager.addSensor(id_to_add, sensorType, appName)){
+			if(mSensorManager.addSensor(id_to_add, sensorType, appName, false)){
 				Log.d(TAG, "Added usb sensor to sensor manager.");
 				
 				Intent i = new Intent();

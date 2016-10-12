@@ -30,4 +30,5 @@ public class ExternalSensorData {
 	public String type;
 	public DetailedSensorState state;
 	public String appName;
+	public boolean dbTransfer;
 }

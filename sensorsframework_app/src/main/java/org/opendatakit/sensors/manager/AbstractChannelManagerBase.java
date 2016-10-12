@@ -28,7 +28,7 @@ import java.util.List;
  */
 public abstract class AbstractChannelManagerBase implements ChannelManager {
 
-	 protected Context mContext;
+	protected Context mContext;
 	protected ODKSensorManager mSensorManager;
 	protected CommunicationChannelType mChannelType;
 	

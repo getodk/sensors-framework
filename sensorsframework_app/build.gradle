@@ -78,7 +78,7 @@ android {
         sourceCompatibility javaVersion
         targetCompatibility javaVersion
     }
-}
+ }
 
 configurations.all {
     resolutionStrategy {

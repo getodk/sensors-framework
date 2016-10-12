@@ -6,4 +6,5 @@ package org.opendatakit.sensors.manager;
 public class InternalSensorMetadata {
    public String id;
    public String appName;
+   public boolean dbTransfer;
 }

@@ -199,7 +199,7 @@ public class BluetoothManager extends AbstractChannelManagerBase {
 			if (bs == null) {
 				Log.d(LOGTAG, "BS is null, ADDING sensor to sensor manager");
 
-				mSensorManager.addSensor(id, sensorType, appName);
+				mSensorManager.addSensor(id, sensorType, appName, false);
 //				mDatabaseManager.sensorUpdateRegState(id.toString(),
 //						SensorRegistrationState.REGISTERED, sensorType.getSensorType());
 				Log.d(LOGTAG, "Added bluetooth sensor to sensor manager.");
