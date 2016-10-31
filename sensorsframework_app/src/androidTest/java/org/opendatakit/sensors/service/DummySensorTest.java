@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.test.ServiceTestCase;
+import org.opendatakit.sensors.SensorsConsts;
 import org.opendatakit.sensors.builtin.BuiltInSensorType;
 import org.opendatakit.sensors.dummy.DummySensorDataGenerator;
 import org.opendatakit.sensors.dummy.DummySensorInternalDriver;
@@ -18,8 +19,6 @@ public class DummySensorTest extends ServiceTestCase<SensorService> {
    public static final String DEFAULT_APP_NAME = "default";
    public static final String EXCEPTION_MSG = "Got an Exception: ";
 
-   String frameworkPackage = "org.opendatakit.sensors";
-   String frameworkService = "org.opendatakit.sensors.service.SensorService";
 
    public DummySensorTest() {
       super(SensorService.class);
@@ -40,8 +39,7 @@ public class DummySensorTest extends ServiceTestCase<SensorService> {
 
    @Nullable private ODKSensorService bindToSensorService() {
       Intent bind_intent = new Intent();
-      bind_intent.setClassName(frameworkPackage, frameworkService);
-      //        bind_intent.setClass(getContext(), SensorService.class);
+      bind_intent.setClassName(SensorsConsts.frameworkPackage, SensorsConsts.frameworkService);
       IBinder service = this.bindService(bind_intent);
 
       ODKSensorService srv;
@@ -77,7 +75,7 @@ public class DummySensorTest extends ServiceTestCase<SensorService> {
          assertTrue(srv.hasSensor(DUMMY_INTERNAL_ID));
          assertFalse(srv.isConnected(DUMMY_INTERNAL_ID));
 
-         srv.sensorConnect(DUMMY_INTERNAL_ID, DEFAULT_APP_NAME);
+         srv.sensorConnect(DUMMY_INTERNAL_ID);
          assertTrue(srv.isConnected(DUMMY_INTERNAL_ID));
 
       } catch (Exception e) {
@@ -94,7 +92,7 @@ public class DummySensorTest extends ServiceTestCase<SensorService> {
          assertTrue(srv.hasSensor(id));
          assertFalse(srv.isConnected(id));
 
-         srv.sensorConnect(id, DEFAULT_APP_NAME);
+         srv.sensorConnect(id);
          assertTrue(srv.isConnected(id));
 
       } catch (Exception e) {
@@ -111,7 +109,7 @@ public class DummySensorTest extends ServiceTestCase<SensorService> {
          assertTrue(srv.hasSensor(DUMMY_INTERNAL_ID));
          assertFalse(srv.isConnected(DUMMY_INTERNAL_ID));
 
-         srv.sensorConnect(DUMMY_INTERNAL_ID, DEFAULT_APP_NAME);
+         srv.sensorConnect(DUMMY_INTERNAL_ID);
          assertTrue(srv.isConnected(DUMMY_INTERNAL_ID));
 
          int dataGenerationDelay = 300;
@@ -121,7 +119,7 @@ public class DummySensorTest extends ServiceTestCase<SensorService> {
          params.putInt(DummySensorDataGenerator.SEND_DELAY_PARAM, dataGenerationDelay);
          srv.configure(DUMMY_INTERNAL_ID, DummySensorDataGenerator.SEND_DELAY_PARAM, params);
 
-         srv.startSensor(DUMMY_INTERNAL_ID);
+         srv.startSensor(DUMMY_INTERNAL_ID, false, DEFAULT_APP_NAME);
 
          try {
             Thread.sleep(sleepTime);
@@ -150,7 +148,7 @@ public class DummySensorTest extends ServiceTestCase<SensorService> {
          assertTrue(srv.hasSensor(DUMMY_INTERNAL_ID));
          assertFalse(srv.isConnected(DUMMY_INTERNAL_ID));
 
-         srv.sensorConnect(DUMMY_INTERNAL_ID, DEFAULT_APP_NAME);
+         srv.sensorConnect(DUMMY_INTERNAL_ID);
          assertTrue(srv.isConnected(DUMMY_INTERNAL_ID));
 
          int orgDataGenerationDelay = 1000;
@@ -171,8 +169,8 @@ public class DummySensorTest extends ServiceTestCase<SensorService> {
                e.printStackTrace();
             }
 
-            srv.startSensor(DUMMY_INTERNAL_ID);
-            System.err.println("START " + sleepTime );
+            srv.startSensor(DUMMY_INTERNAL_ID, false, DEFAULT_APP_NAME);
+
             try {
                Thread.sleep(sleepTime);
             } catch (InterruptedException e) {

@@ -50,14 +50,13 @@ public class SensorServiceInterface extends ODKSensorService.Stub {
       mDummyManager = dummyManager;
    }
 
-   public void sensorConnect(String id, String appForDatabase) throws RemoteException {
+   public void sensorConnect(String id) throws RemoteException {
       Log.d(TAG, "sensorConnect. id: " + id);
       ODKSensor sensor = mSensorManager.getSensor(id);
 
       try {
          if (sensor != null) {
             Log.d(TAG, "calling Facade.connect " + id);
-            sensor.setAppNameForDatabase(appForDatabase);
             sensor.connect();
             Log.d(TAG, "returned from Facade.connect " + id);
          }
@@ -86,10 +85,13 @@ public class SensorServiceInterface extends ODKSensorService.Stub {
       }
    }
 
-   public boolean startSensor(String id) throws RemoteException {
+   public boolean startSensor(String id, boolean transferToDb, String appNameForDatabase) throws
+       RemoteException {
       ODKSensor sensor = mSensorManager.getSensor(id);
 
       if (sensor != null) {
+         sensor.setAppNameForDatabase(appNameForDatabase);
+         sensor.setDbTransfer(transferToDb);
          boolean stat = sensor.startSensor();
          return stat;
       } else {

@@ -128,7 +128,6 @@ public class ODKSensorManager {
                   if (externalSensorData.state == DetailedSensorState.CONNECTED) {
                      try {
                         channelManager.sensorConnect(externalSensorData.id);
-                        //								updateSensorState(externalSensorData.id, DetailedSensorState.CONNECTED);
                         Log.d(LOGTAG, "connected to sensor " + externalSensorData.id + " over "
                             + channelManager.getCommChannelType());
                      } catch (SensorNotFoundException snfe) {
