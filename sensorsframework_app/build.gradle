@@ -25,6 +25,7 @@ android {
         targetSdkVersion(targetVersion)
         versionCode(releaseVersionCode)
         versionName(versionCodeName)
+        testInstrumentationRunner(instrumentationRunner)
     }
 
     productFlavors {
@@ -132,5 +133,8 @@ dependencies {
 
     androidTestCompile 'junit:junit:4.12'
     androidTestCompile 'com.android.support:support-v4:25.1.0'
+
+    // Testing dependencies
     testCompile 'junit:junit:4.12'
+    androidTestCompile 'com.android.support.test:runner:0.5'
 }
