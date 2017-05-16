@@ -37,7 +37,7 @@ public class ODKSensorManager {
    private static final String LOGTAG = ODKSensorManager.class.getSimpleName();
    private DatabaseManager databaseManager;
 
-   private Thread workerThread;
+   private WorkerThread workerThread;
    private Context svcContext;
 
    private Map<String, ODKSensor> sensors;
@@ -250,7 +250,7 @@ public class ODKSensorManager {
 
    public void shutdown() {
       shutdownAllSensors();
-      ((WorkerThread) workerThread).stopthread();
+      workerThread.stopthread();
    }
 
    public boolean addSensor(String id, DriverType driver, String appName, boolean

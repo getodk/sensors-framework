@@ -46,7 +46,7 @@ public class USBManager extends AbstractChannelManagerBase {
 	private boolean DEBUG_VERBOSE = false;
 	private static final String ACTION_USB_PERMISSION = "org.opendatakit.sensors.USB_PERMISSION";
 		
-    private PendingIntent usbAuthPendingIntent;
+	private PendingIntent usbAuthPendingIntent;
 	private USBCommSubChannel activeCommChannel;
 	private USBScanner deviceScanner;
 	private volatile boolean deviceAttached = false;
@@ -277,8 +277,8 @@ public class USBManager extends AbstractChannelManagerBase {
 
 				try {
 					Thread.sleep(1000);
-				} catch (Exception e) {
-					e.printStackTrace();
+				} catch (InterruptedException e) {
+					Log.d(TAG,"Interrupt in Sensors USB thread");
 				}
 			}			
 		}

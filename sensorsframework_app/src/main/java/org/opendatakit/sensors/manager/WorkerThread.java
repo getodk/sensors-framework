@@ -49,275 +49,277 @@ import org.opendatakit.sensors.ODKSensor;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * 
  * @author wbrunette@gmail.com
  * @author rohitchaudhri@gmail.com
- * 
  */
 public class WorkerThread extends Thread {
-  private static final String TAG = "WorkerThread";
+   private static final String TAG = "SensorsWorkerThread";
 
-  private boolean isRunning;
-  private Context serviceContext;
-  private ODKSensorManager sensorManager;
-  private ServiceConnectionWrapper databaseServiceConnection = null;
-  private UserDbInterface databaseService = null;
-  
-  /**
-   * Wrapper class for service activation management.
-   * 
-   * @author mitchellsundt@gmail.com
-   *
-   */
-  private final class ServiceConnectionWrapper implements ServiceConnection {
+   private AtomicBoolean isRunning;
+   private Context serviceContext;
+   private ODKSensorManager sensorManager;
+   private ServiceConnectionWrapper databaseServiceConnection = null;
+   private UserDbInterface databaseService = null;
 
-    @Override
-    public void onServiceConnected(ComponentName name, IBinder service) {
-      WorkerThread.this.doServiceConnected(name, service);
-    }
+   public WorkerThread(Context context, ODKSensorManager manager) {
+      super("WorkerThread");
+      isRunning = new AtomicBoolean(true);
+      serviceContext = context;
+      sensorManager = manager;
+   }
 
-    @Override
-    public void onServiceDisconnected(ComponentName name) {
-      WorkerThread.this.doServiceDisconnected(name);
-    }
-  }
-  
-  private void unbindDatabaseBinderWrapper() {
-    try {
-      ServiceConnectionWrapper tmp = databaseServiceConnection;
-      databaseServiceConnection = null;
-      if ( tmp != null ) {
-        serviceContext.unbindService(tmp);
+   /**
+    * Wrapper class for service activation management.
+    *
+    * @author mitchellsundt@gmail.com
+    */
+   private final class ServiceConnectionWrapper implements ServiceConnection {
+
+      @Override public void onServiceConnected(ComponentName name, IBinder service) {
+         WorkerThread.this.doServiceConnected(name, service);
       }
-    } catch ( Exception e ) {
-      // ignore
-      e.printStackTrace();
-    }
-  }
-  
-  private void shutdownServices() {
-    Log.i(TAG, "shutdownServices - Releasing WebServer and DbShim service");
-    databaseService = null;
-    unbindDatabaseBinderWrapper();
-  }
-  
-  private void bindToService() {
-    if (isRunning) {
-      if (databaseService == null && 
-          databaseServiceConnection == null) {
-        Log.i(TAG, "Attempting bind to Database service");
-        databaseServiceConnection = new ServiceConnectionWrapper();
-        Intent bind_intent = new Intent();
-        bind_intent.setClassName(IntentConsts.Database.DATABASE_SERVICE_PACKAGE,
-                IntentConsts.Database.DATABASE_SERVICE_CLASS);
-        serviceContext.bindService(
-            bind_intent,
-            databaseServiceConnection,
-            Context.BIND_AUTO_CREATE
-                | ((Build.VERSION.SDK_INT >= 14) ? Context.BIND_ADJUST_WITH_ACTIVITY : 0));
+
+      @Override public void onServiceDisconnected(ComponentName name) {
+         WorkerThread.this.doServiceDisconnected(name);
       }
-    }
-  }
-  
-  private void doServiceConnected(ComponentName className, IBinder service) {
+   }
 
-    if (className.getClassName().equals(IntentConsts.Database.DATABASE_SERVICE_CLASS)) {
-      Log.i(TAG, "Bound to Database service");
-
+   private void unbindDatabaseBinderWrapper() {
       try {
-        databaseService = new UserDbInterface(AidlDbInterface.Stub.asInterface(service));
-      } catch (IllegalArgumentException e) {
-        databaseService = null;
+         ServiceConnectionWrapper tmp = databaseServiceConnection;
+         databaseServiceConnection = null;
+         if (tmp != null) {
+            serviceContext.unbindService(tmp);
+         }
+      } catch (Exception e) {
+         // ignore
+         e.printStackTrace();
       }
-    }
-  }
+   }
 
-  public UserDbInterface getDatabase() {
-    return databaseService;
-  }
-
-  private void doServiceDisconnected(ComponentName className) {
-
-    if (className.getClassName().equals(IntentConsts.Database.DATABASE_SERVICE_CLASS)) {
-      if (!isRunning) {
-        Log.i(TAG, "Unbound from Database service (intentionally)");
-      } else {
-        Log.w(TAG, "Unbound from Database service (unexpected)");
-      }
+   private void shutdownServices() {
+      Log.i(TAG, "shutdownServices - Releasing WebServer and DbShim service");
       databaseService = null;
       unbindDatabaseBinderWrapper();
-    }
+   }
 
-    // the bindToService() method decides whether to connect or not...
-    bindToService();
-  }
+   private void bindToService() {
+      if (isRunning.get()) {
+         if (databaseService == null && databaseServiceConnection == null) {
+            Log.i(TAG, "Attempting bind to Database service");
+            databaseServiceConnection = new ServiceConnectionWrapper();
+            Intent bind_intent = new Intent();
+            bind_intent.setClassName(IntentConsts.Database.DATABASE_SERVICE_PACKAGE,
+                IntentConsts.Database.DATABASE_SERVICE_CLASS);
+            serviceContext.bindService(bind_intent, databaseServiceConnection,
+                Context.BIND_AUTO_CREATE | ((Build.VERSION.SDK_INT >= 14) ?
+                    Context.BIND_ADJUST_WITH_ACTIVITY :
+                    0));
+         }
+      }
+   }
 
-  public WorkerThread(Context context, ODKSensorManager manager) {
-    super("WorkerThread");
-    isRunning = true;
-    serviceContext = context;
-    sensorManager = manager;
-  }
+   private void doServiceConnected(ComponentName className, IBinder service) {
 
-  public void stopthread() {
-    isRunning = false;
-    this.interrupt();
-  }
+      if (className.getClassName().equals(IntentConsts.Database.DATABASE_SERVICE_CLASS)) {
+         Log.i(TAG, "Bound to Database service");
 
-  @Override
-  public void run() {
-    Log.d(TAG, "worker thread started");
+         try {
+            databaseService = new UserDbInterface(AidlDbInterface.Stub.asInterface(service));
+         } catch (IllegalArgumentException e) {
+            databaseService = null;
+         }
+      }
+   }
 
-    while (isRunning) {
+   public UserDbInterface getDatabase() {
+      return databaseService;
+   }
+
+   private void doServiceDisconnected(ComponentName className) {
+
+      if (className.getClassName().equals(IntentConsts.Database.DATABASE_SERVICE_CLASS)) {
+         if (!isRunning.get()) {
+            Log.i(TAG, "Unbound from Database service (intentionally)");
+         } else {
+            Log.w(TAG, "Unbound from Database service (unexpected)");
+         }
+         databaseService = null;
+         unbindDatabaseBinderWrapper();
+      }
+
+      // the bindToService() method decides whether to connect or not...
       bindToService();
-  
-      while (isRunning && (getDatabase() != null)) {
-        try {
-          for (ODKSensor sensor : sensorManager.getSensorsToTransferToDb()) {
-            moveSensorDataToDB(sensor);
-          }
-  
-          Thread.sleep(3000);
-        } catch (InterruptedException iex) {
-          iex.printStackTrace();
-        }
-      }
-    }
-    
-    shutdownServices();
-  }
+   }
 
-  private void moveSensorDataToDB(ODKSensor aSensor) {
-    if (aSensor != null) {
-      List<Bundle> bundles = aSensor.getSensorData(0);// XXX for now this gets
-                                                      // all data fm sensor
-      if (bundles != null) {
-        Iterator<Bundle> iter = bundles.iterator();
-        while (iter.hasNext()) {
-          Bundle aBundle = iter.next();
+   public void stopthread() {
+      isRunning.set(false);
+      this.interrupt();
+   }
 
-          DriverType driver = sensorManager.getSensorDriverType(aSensor.getSensorID());
-          if (driver != null && driver.getTableDefinitionStr() != null) {
-            parseSensorDataAndInsertIntoTable(aSensor, driver.getTableDefinitionStr(), aBundle);
-          }
+   @Override public void run() {
+      Log.d(TAG, "worker thread started");
 
-        }
-      }
-    }
-  }
+      while (isRunning.get()) {
+         bindToService();
 
-  private void parseSensorDataAndInsertIntoTable(ODKSensor aSensor, String strTableDef,
-      Bundle dataBundle) {
+         while ((isRunning.get()) && (getDatabase() != null)) {
+            try {
+               for (ODKSensor sensor : sensorManager.getSensorsToTransferToDb()) {
+                  moveSensorDataToDB(sensor);
+               }
 
-    ContentValues tablesValues = new ContentValues();
-    DbHandle db = null;
-    try {
-      db = getDatabase().openDatabase(aSensor.getAppNameForDatabase());
-
-      if (strTableDef == null) {
-        throw new IllegalArgumentException("The tableDefinition is null!");
+               Thread.sleep(3000);
+            } catch (InterruptedException iex) {
+               Log.w(TAG, "Sensors worker thread interrupted");
+            }
+         }
       }
 
-      JSONObject theTableDef =
-          (new JSONObject(strTableDef)).getJSONObject(ODKJsonNames.jsonTableStr);
-      String tableId = theTableDef.getString(ODKJsonNames.jsonTableIdStr);
+      shutdownServices();
+   }
 
-      if (tableId == null) {
-        throw new IllegalArgumentException("The tableDefinition does not specify the tableId!");
+   private void moveSensorDataToDB(ODKSensor aSensor) {
+      if (aSensor != null) {
+         List<Bundle> bundles = aSensor.getSensorData(0);// XXX for now this gets
+         // all data fm sensor
+         if (bundles != null) {
+            Iterator<Bundle> iter = bundles.iterator();
+            while (iter.hasNext()) {
+               Bundle aBundle = iter.next();
+
+               DriverType driver = sensorManager.getSensorDriverType(aSensor.getSensorID());
+               if (driver != null && driver.getTableDefinitionStr() != null) {
+                  parseSensorDataAndInsertIntoTable(aSensor, driver.getTableDefinitionStr(),
+                      aBundle);
+               }
+
+            }
+         }
       }
+   }
 
-       OrderedColumns orderedDefs;
-       // if the table does not exist, create it.
-      // NOTE: if the table does exist, we don't verify that the table schema matches.
-      // if we want to do that, always take the not-exists branch...
-      if (!getDatabase().hasTableId(aSensor.getAppNameForDatabase(), db, tableId)) {
+   private void parseSensorDataAndInsertIntoTable(ODKSensor aSensor, String strTableDef,
+       Bundle dataBundle) {
 
-         List<Column> columns = new ArrayList<Column>();
-         // Create the columns for the driver table
-         JSONArray colJsonArray = theTableDef.getJSONArray(ODKJsonNames.jsonColumnsStr);
+      ContentValues tablesValues = new ContentValues();
+      DbHandle db = null;
+      try {
+         db = getDatabase().openDatabase(aSensor.getAppNameForDatabase());
 
-         for (int i = 0; i < colJsonArray.length(); i++) {
-            JSONObject colJson = colJsonArray.getJSONObject(i);
-            String elementKey = colJson.getString(ODKJsonNames.jsonElementKeyStr);
-            String elementName = colJson.getString(ODKJsonNames.jsonElementNameStr);
-            String elementType = colJson.getString(ODKJsonNames.jsonElementTypeStr);
-            String listChildElementKeys = colJson.getString(ODKJsonNames
-                .jsonListChildElementKeysStr);
-            columns.add(new Column(elementKey, elementName, elementType, listChildElementKeys));
+         if (strTableDef == null) {
+            throw new IllegalArgumentException("The tableDefinition is null!");
          }
 
-         // Create the table for driver
-         ColumnList cols = new ColumnList(columns);
-         orderedDefs = getDatabase().createOrOpenTableWithColumns(aSensor.getAppNameForDatabase()
-             , db, tableId, cols);
-      } else {
-         orderedDefs = getDatabase().getUserDefinedColumns(aSensor.getAppNameForDatabase(), db, tableId);
+         JSONObject theTableDef = (new JSONObject(strTableDef))
+             .getJSONObject(ODKJsonNames.jsonTableStr);
+         String tableId = theTableDef.getString(ODKJsonNames.jsonTableIdStr);
+
+         if (tableId == null) {
+            throw new IllegalArgumentException("The tableDefinition does not specify the tableId!");
+         }
+
+         OrderedColumns orderedDefs;
+         // if the table does not exist, create it.
+         // NOTE: if the table does exist, we don't verify that the table schema matches.
+         // if we want to do that, always take the not-exists branch...
+         if (!getDatabase().hasTableId(aSensor.getAppNameForDatabase(), db, tableId)) {
+
+            List<Column> columns = new ArrayList<Column>();
+            // Create the columns for the driver table
+            JSONArray colJsonArray = theTableDef.getJSONArray(ODKJsonNames.jsonColumnsStr);
+
+            for (int i = 0; i < colJsonArray.length(); i++) {
+               JSONObject colJson = colJsonArray.getJSONObject(i);
+               String elementKey = colJson.getString(ODKJsonNames.jsonElementKeyStr);
+               String elementName = colJson.getString(ODKJsonNames.jsonElementNameStr);
+               String elementType = colJson.getString(ODKJsonNames.jsonElementTypeStr);
+               String listChildElementKeys = colJson
+                   .getString(ODKJsonNames.jsonListChildElementKeysStr);
+               columns.add(new Column(elementKey, elementName, elementType, listChildElementKeys));
+            }
+
+            // Create the table for driver
+            ColumnList cols = new ColumnList(columns);
+            orderedDefs = getDatabase()
+                .createOrOpenTableWithColumns(aSensor.getAppNameForDatabase(), db, tableId, cols);
+         } else {
+            orderedDefs = getDatabase()
+                .getUserDefinedColumns(aSensor.getAppNameForDatabase(), db, tableId);
+         }
+
+         // store data values into the user-defined columns of the driver table
+         for (ColumnDefinition col : orderedDefs.getColumnDefinitions()) {
+            if (!col.isUnitOfRetention()) {
+               continue;
+            }
+
+            String colName = col.getElementKey();
+            ElementType type = col.getType();
+
+            if (colName.equals(DataSeries.SENSOR_ID)) {
+
+               // special treatment
+               tablesValues.put(colName, aSensor.getSensorID());
+
+            } else if (type.getDataType() == ElementDataType.bool) {
+
+               Boolean boolColData = dataBundle.containsKey(colName) ?
+                   dataBundle.getBoolean(colName) :
+                   null;
+               Integer colData = (boolColData == null) ? null : (boolColData ? 1 : 0);
+               tablesValues.put(colName, colData);
+
+            } else if (type.getDataType() == ElementDataType.integer) {
+
+               Integer colData = dataBundle.containsKey(colName) ?
+                   dataBundle.getInt(colName) :
+                   null;
+               tablesValues.put(colName, colData);
+
+            } else if (type.getDataType() == ElementDataType.number) {
+
+               Double colData = dataBundle.containsKey(colName) ?
+                   dataBundle.getDouble(colName) :
+                   null;
+               tablesValues.put(colName, colData);
+
+            } else {
+               // everything else is a string value coming across the wire...
+               String colData = dataBundle.containsKey(colName) ?
+                   dataBundle.getString(colName) :
+                   null;
+               tablesValues.put(colName, colData);
+            }
+         }
+
+         if (tablesValues.size() > 0) {
+            Log.i(TAG, "Writing db values for sensor:" + aSensor.getSensorID());
+            String rowId = tablesValues.containsKey(DataTableColumns.ID) ?
+                tablesValues.getAsString(DataTableColumns.ID) :
+                null;
+            if (rowId == null) {
+               rowId = LocalizationUtils.genUUID();
+            }
+            // don't require current user to have appropriate privileges to insert data
+            getDatabase().privilegedInsertRowWithId(aSensor.getAppNameForDatabase(), db, tableId,
+                orderedDefs, tablesValues, rowId, true);
+         }
+      } catch (ServicesAvailabilityException e) {
+         e.printStackTrace();
+      } catch (Exception e) {
+         e.printStackTrace();
+      } finally {
+         if (db != null) {
+            try {
+               getDatabase().closeDatabase(aSensor.getAppNameForDatabase(), db);
+            } catch (ServicesAvailabilityException e) {
+               e.printStackTrace();
+            }
+         }
       }
-
-      // store data values into the user-defined columns of the driver table
-      for (ColumnDefinition col : orderedDefs.getColumnDefinitions()) {
-        if (!col.isUnitOfRetention()) {
-          continue;
-        }
-
-        String colName = col.getElementKey();
-        ElementType type = col.getType();
-
-        if (colName.equals(DataSeries.SENSOR_ID)) {
-
-          // special treatment
-          tablesValues.put(colName, aSensor.getSensorID());
-
-        } else if (type.getDataType() == ElementDataType.bool) {
-
-          Boolean boolColData = dataBundle.containsKey(colName) ? dataBundle.getBoolean(colName)
-              : null;
-          Integer colData = (boolColData == null) ? null : (boolColData ? 1 : 0);
-          tablesValues.put(colName, colData);
-
-        } else if (type.getDataType() == ElementDataType.integer) {
-
-          Integer colData = dataBundle.containsKey(colName) ? dataBundle.getInt(colName) : null;
-          tablesValues.put(colName, colData);
-
-        } else if (type.getDataType() == ElementDataType.number) {
-
-          Double colData = dataBundle.containsKey(colName) ? dataBundle.getDouble(colName) : null;
-          tablesValues.put(colName, colData);
-
-        } else {
-          // everything else is a string value coming across the wire...
-          String colData = dataBundle.containsKey(colName) ? dataBundle.getString(colName) : null;
-          tablesValues.put(colName, colData);
-        }
-      }
-
-      if (tablesValues.size() > 0) {
-        Log.i(TAG, "Writing db values for sensor:" + aSensor.getSensorID());
-        String rowId = tablesValues.containsKey(DataTableColumns.ID) ? tablesValues
-            .getAsString(DataTableColumns.ID) : null;
-        if (rowId == null) {
-          rowId = LocalizationUtils.genUUID();
-        }
-        // don't require current user to have appropriate privileges to insert data
-        getDatabase().privilegedInsertRowWithId(aSensor.getAppNameForDatabase(), db, tableId,
-            orderedDefs,
-            tablesValues, rowId, true);
-      }
-    } catch (ServicesAvailabilityException e) {
-      e.printStackTrace();
-    } catch (Exception e) {
-      e.printStackTrace();
-    } finally {
-      if (db != null) {
-        try {
-          getDatabase().closeDatabase(aSensor.getAppNameForDatabase(), db);
-        } catch (ServicesAvailabilityException e) {
-          e.printStackTrace();
-        }
-      }
-    }
-  }
+   }
 }
