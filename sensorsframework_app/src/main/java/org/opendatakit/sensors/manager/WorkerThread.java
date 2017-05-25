@@ -15,16 +15,11 @@
  */
 package org.opendatakit.sensors.manager;
 
-import android.content.ComponentName;
-import android.content.ContentValues;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
+import android.content.*;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
@@ -34,17 +29,14 @@ import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.ColumnList;
 import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.service.*;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.provider.DataTableColumns;
-import org.opendatakit.utilities.LocalizationUtils;
-import org.opendatakit.utilities.ODKJsonNames;
-import org.opendatakit.database.DatabaseConstants;
-import org.opendatakit.database.service.UserDbInterface;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.database.service.AidlDbInterface;
 import org.opendatakit.sensors.DataSeries;
 import org.opendatakit.sensors.DriverType;
 import org.opendatakit.sensors.ODKSensor;
+import org.opendatakit.utilities.LocalizationUtils;
+import org.opendatakit.utilities.ODKJsonNames;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -128,7 +120,9 @@ public class WorkerThread extends Thread {
          Log.i(TAG, "Bound to Database service");
 
          try {
-            databaseService = new UserDbInterface(AidlDbInterface.Stub.asInterface(service));
+            InternalUserDbInterface internalUserDbInterface = new InternalUserDbInterfaceAidlWrapperImpl
+                (AidlDbInterface.Stub.asInterface(service));
+            databaseService = new UserDbInterfaceImpl(internalUserDbInterface);
          } catch (IllegalArgumentException e) {
             databaseService = null;
          }
