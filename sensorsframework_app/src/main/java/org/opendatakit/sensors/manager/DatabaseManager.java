@@ -39,7 +39,7 @@ public class DatabaseManager {
 
    // database metadata
    private static final String DATABASE_NAME = "sensors.db";
-   private static final int DATABASE_VERSION = 4;
+   private static final int DATABASE_VERSION = 5;
 
    // database helper
    private DatabaseHelper mOpenHelper;
@@ -59,6 +59,7 @@ public class DatabaseManager {
       public static final String TYPE = "type"; // sensor type
       public static final String STATE = "state"; // sensor state
       public static final String APP_NAME = "app_name"; // the app name space the sensor readings should be stored
+      public static final String DB_TRANSFER = "db_transfer"; // transfer data to DB automatically
    }
 
    /**
@@ -72,6 +73,7 @@ public class DatabaseManager {
       public static final String TABLE_NAME = "internalsensors";
       public static final String ID = "id"; // sensor id (primary key)
       public static final String APP_NAME = "app_name"; // the app name space the sensor readings should be stored
+      public static final String DB_TRANSFER = "db_transfer"; // transfer data to DB automatically
    }
 
    /**
@@ -103,12 +105,14 @@ public class DatabaseManager {
                 ExternalSensorTable.TYPE + " TEXT," +
                 ExternalSensorTable.STATE + " TEXT," +
                 ExternalSensorTable.COMM_TYPE + " TEXT," +
-                ExternalSensorTable.APP_NAME + " TEXT" + ");");
+                ExternalSensorTable.APP_NAME + " TEXT," +
+                ExternalSensorTable.DB_TRANSFER + " TEXT" + ");");
 
             // create sensor table
             db.execSQL("CREATE TABLE " + InternalSensorTable.TABLE_NAME + " (" +
                 InternalSensorTable.ID + " TEXT PRIMARY KEY," +
-                InternalSensorTable.APP_NAME + " TEXT" + ");");
+                InternalSensorTable.APP_NAME + " TEXT," +
+                ExternalSensorTable.DB_TRANSFER + " TEXT" + ");");
 
          } catch (SQLException e) {
             Log.w(LOGTAG, "DatabaseHelper onCreate Failed!");
@@ -159,16 +163,18 @@ public class DatabaseManager {
    /**
     * Add new internal sensor. Replaces any existing sensor with the same id.
     *
-    * @param id      sensor id
-    * @param appName db appname to store sensor data
+    * @param id         sensor id
+    * @param appName    db appname to store sensor data
+    * @param dbTransfer transfer data to DB automatically
     */
-   public synchronized void insertInternalSensor(String id, String appName) {
+   public synchronized void insertInternalSensor(String id, String appName, boolean dbTransfer) {
       SQLiteDatabase db = mOpenHelper.getWritableDatabase();
 
       // store column values
       ContentValues values = new ContentValues();
       values.put(InternalSensorTable.ID, id);
       values.put(InternalSensorTable.APP_NAME, appName);
+      values.put(InternalSensorTable.DB_TRANSFER, Boolean.toString(dbTransfer));
 
       // insert (replace on conflicts)
       try {
@@ -185,7 +191,7 @@ public class DatabaseManager {
     * Check if internal sensor has metadata in db
     *
     * @param id sensor id
-    * @return tru if internal sensor has metadata in db, false otherwise
+    * @return true if internal sensor has metadata in db, false otherwise
     */
    public synchronized boolean internalSensorMetadataInDb(String id) {
       SQLiteDatabase db = mOpenHelper.getReadableDatabase();
@@ -213,7 +219,7 @@ public class DatabaseManager {
     * Query internal sensor app name
     *
     * @param id sensor id
-    * @return sensor name
+    * @return database app name
     */
    public synchronized String internalSensorAppName(String id) {
       SQLiteDatabase db = mOpenHelper.getReadableDatabase();
@@ -261,6 +267,25 @@ public class DatabaseManager {
    }
 
    /**
+    * Update whether to transfer data to DB automatically
+    *
+    * @param id         sensor id
+    * @param dbTransfer transfer data to DB automatically
+    */
+   public synchronized void internalSensorUpdateDbTransfer(String id, boolean dbTransfer) {
+      SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+
+      // store new column value
+
+      ContentValues values = new ContentValues();
+      values.put(InternalSensorTable.DB_TRANSFER, Boolean.toString(dbTransfer));
+
+      String[] args = { id };
+
+      db.update(InternalSensorTable.TABLE_NAME, values, InternalSensorTable.ID + "=?", args);
+   }
+
+   /**
     * Query list of all internal sensors with metadata
     *
     * @return list of known sensor
@@ -269,7 +294,8 @@ public class DatabaseManager {
       SQLiteDatabase db = mOpenHelper.getReadableDatabase();
 
       // query columns
-      String[] cols = { InternalSensorTable.ID, InternalSensorTable.APP_NAME };
+      String[] cols = { InternalSensorTable.ID, InternalSensorTable.APP_NAME,
+          InternalSensorTable.DB_TRANSFER };
 
       // run query
       Cursor cursor = db.query(InternalSensorTable.TABLE_NAME, cols, null, null, null, null, null);
@@ -280,11 +306,42 @@ public class DatabaseManager {
          InternalSensorMetadata data = new InternalSensorMetadata();
          data.id = cursor.getString(0);
          data.appName = cursor.getString(1);
+         data.dbTransfer = Boolean.getBoolean(cursor.getString(2));
          results.add(data);
       }
 
       cursor.close();
       return results;
+   }
+
+   /**
+    * Query internal sensor by id
+    *
+    * @param sensorId the id of sensor to return
+    * @return list of known sensor
+    */
+   public synchronized InternalSensorMetadata getInternalSensorDataForId(String sensorId) {
+      SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+
+      // query columns
+      String[] cols = { InternalSensorTable.ID, InternalSensorTable.APP_NAME,
+          InternalSensorTable.DB_TRANSFER };
+      String[] args = { sensorId };
+
+      // run query
+      Cursor cursor = db
+          .query(InternalSensorTable.TABLE_NAME, cols, InternalSensorTable.ID + "=?", args, null,
+              null, null);
+
+      // parse results
+      cursor.moveToFirst();
+      InternalSensorMetadata data = new InternalSensorMetadata();
+      data.id = cursor.getString(0);
+      data.appName = cursor.getString(1);
+      data.dbTransfer = Boolean.getBoolean(cursor.getString(2));
+
+      cursor.close();
+      return data;
    }
 
    /**
@@ -314,15 +371,17 @@ public class DatabaseManager {
    /**
     * Add new external sensor. Replaces any existing sensor with the same id.
     *
-    * @param id       sensor id
-    * @param name     sensor name
-    * @param type     sensor type
-    * @param state    sensor state
-    * @param commType sensor communication type
-    * @param appName  db appname to store sensor data
+    * @param id         sensor id
+    * @param name       sensor name
+    * @param type       sensor type
+    * @param state      sensor state
+    * @param commType   sensor communication type
+    * @param appName    db appname to store sensor data
+    * @param dbTransfer transfer data to DB automatically
     */
    public synchronized void insertExternalSensor(String id, String name, String type,
-       DetailedSensorState state, CommunicationChannelType commType, String appName) {
+       DetailedSensorState state, CommunicationChannelType commType, String appName,
+       boolean dbTransfer) {
       SQLiteDatabase db = mOpenHelper.getWritableDatabase();
 
       // store column values
@@ -333,6 +392,7 @@ public class DatabaseManager {
       values.put(ExternalSensorTable.STATE, state.name());
       values.put(ExternalSensorTable.COMM_TYPE, commType.name());
       values.put(ExternalSensorTable.APP_NAME, appName);
+      values.put(ExternalSensorTable.DB_TRANSFER, Boolean.toString(dbTransfer));
 
       // insert (replace on conflicts)
       try {
@@ -395,6 +455,25 @@ public class DatabaseManager {
 
       ContentValues values = new ContentValues();
       values.put(ExternalSensorTable.APP_NAME, appName);
+
+      String[] args = { id };
+
+      db.update(ExternalSensorTable.TABLE_NAME, values, ExternalSensorTable.ID + "=?", args);
+   }
+
+   /**
+    * Update whether to transfer data to DB automatically
+    *
+    * @param id         sensor id
+    * @param dbTransfer transfer data to DB automatically
+    */
+   public synchronized void externalSensorUpdateDbTransfer(String id, boolean dbTransfer) {
+      SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+
+      // store new column value
+
+      ContentValues values = new ContentValues();
+      values.put(ExternalSensorTable.DB_TRANSFER, Boolean.toString(dbTransfer));
 
       String[] args = { id };
 
@@ -492,22 +571,9 @@ public class DatabaseManager {
    }
 
    /**
-    * Determines if a sensor is in the database.
+    * Query external sensor by id
     *
-    * @param id Sensor Id
-    * @return True if sensor is in DB, false Otherwise
-    */
-   public synchronized boolean externalSensorIsInDatabase(String id) {
-
-      if (externalSensorName(id).compareTo("Unknown Name") == 0)
-         return false;
-      else
-         return true;
-   }
-
-   /**
-    * Query list of all available sensors
-    *
+    * @param sensorId the id of sensor to return
     * @return list of known sensor
     */
    public synchronized ExternalSensorData getExternalSensorDataForId(String sensorId) {
@@ -531,6 +597,7 @@ public class DatabaseManager {
          data.type = cursor.getString(2);
          data.state = DetailedSensorState.valueOf(cursor.getString(3));
          data.appName = cursor.getString(4);
+         data.dbTransfer = Boolean.getBoolean(cursor.getString(5));
       }
 
       cursor.close();
@@ -565,6 +632,7 @@ public class DatabaseManager {
          data.type = cursor.getString(2);
          data.state = DetailedSensorState.valueOf(cursor.getString(3));
          data.appName = cursor.getString(4);
+         data.dbTransfer = Boolean.getBoolean(cursor.getString(5));
          results.add(data);
       }
 

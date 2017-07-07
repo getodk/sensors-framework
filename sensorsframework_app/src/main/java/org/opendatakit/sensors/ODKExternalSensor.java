@@ -36,6 +36,7 @@ public class ODKExternalSensor implements ODKSensor {
 
    private String sensorId;
    private String appNameForDatabase;
+   private boolean dbTransfer;
    private ChannelManager commChannelManager;
    private DriverCommunicator sensorDriverCom;
    private Queue<SensorDataPacket> buffer;
@@ -45,10 +46,12 @@ public class ODKExternalSensor implements ODKSensor {
 
    private byte[] remainingBytes;
 
-   public ODKExternalSensor(String sensorID, String appName, DriverCommunicator driverCom,
-       ChannelManager channelMgr, String readingUiIntentStr, String configUiIntentStr) {
+   public ODKExternalSensor(String sensorID, String appName,  boolean transferToDb,
+       DriverCommunicator driverCom, ChannelManager channelMgr, String readingUiIntentStr,
+       String configUiIntentStr) {
       this.sensorId = sensorID;
       this.appNameForDatabase = appName;
+      this.dbTransfer = transferToDb;
       this.sensorDriverCom = driverCom;
       this.commChannelManager = channelMgr;
       this.readingUiIntentStr = readingUiIntentStr;
@@ -240,4 +243,15 @@ public class ODKExternalSensor implements ODKSensor {
       dbManager.externalSensorUpdateAppName(sensorId, appName);
       appNameForDatabase = appName;
    }
+
+   @Override public boolean transferDataToDb() {
+      return dbTransfer;
+   }
+
+   @Override public void setDbTransfer(boolean transferToDb) {
+      DatabaseManager dbManager = SensorsSingleton.getDatabaseManager();
+      dbManager.externalSensorUpdateDbTransfer(sensorId, transferToDb);
+      dbTransfer = transferToDb;
+   }
+
 }

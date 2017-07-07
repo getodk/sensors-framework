@@ -51,14 +51,18 @@ public class ODKBuiltInSensor implements ODKSensor, SensorEventListener {
 
    // state
    private Queue<SensorDataPacket> buffer;
+   private boolean dbTransfer;
    private String appNameForDatabase;
    private byte[] remainingBytes;
 
    private int rate;
 
+   private boolean connected;
+
    public ODKBuiltInSensor(BuiltInSensorType type, SensorManager builtInSensorManager,
-       String sensorID, String appName) throws Exception {
+       String sensorID, String appName, boolean transferToDb) throws Exception {
       this.appNameForDatabase = appName;
+      this.dbTransfer = transferToDb;
       this.sensorType = type;
       this.mBuiltInSensorManager = builtInSensorManager;
       this.sensorId = sensorID;
@@ -69,6 +73,15 @@ public class ODKBuiltInSensor implements ODKSensor, SensorEventListener {
 
       this.buffer = new ConcurrentLinkedQueue<SensorDataPacket>();
       this.rate = SensorManager.SENSOR_DELAY_NORMAL;
+      this.connected = false;
+   }
+
+   public SensorStateMachine getSensorState() {
+      SensorStateMachine ssm = new SensorStateMachine();
+      if(connected) {
+         ssm.status = SensorStatus.CONNECTED;
+      }
+      return ssm;
    }
 
    @Override public void connect() throws SensorNotFoundException {
@@ -76,10 +89,12 @@ public class ODKBuiltInSensor implements ODKSensor, SensorEventListener {
       if (sensor == null) {
          throw new SensorNotFoundException("Unable to locate sensor " + sensorType.name());
       }
+     connected = true;
    }
 
    @Override public void disconnect() throws SensorNotFoundException {
       this.stopSensor();
+      connected = false;
    }
 
    @Override public void shutdown() throws SensorNotFoundException {
@@ -120,8 +135,10 @@ public class ODKBuiltInSensor implements ODKSensor, SensorEventListener {
 
    @Override public List<Bundle> getSensorData(long maxNumReadings) {
       ArrayList<SensorDataPacket> rawData = new ArrayList<SensorDataPacket>();
-      rawData.addAll(buffer);
-      buffer.clear();
+      synchronized (buffer) {
+         rawData.addAll(buffer);
+         buffer.clear();
+      }
       SensorDataParseResponse response = sensorDriver
           .getSensorData(maxNumReadings, rawData, remainingBytes);
       remainingBytes = response.getRemainingData();
@@ -195,6 +212,16 @@ public class ODKBuiltInSensor implements ODKSensor, SensorEventListener {
       DatabaseManager dbManager = SensorsSingleton.getDatabaseManager();
       dbManager.internalSensorUpdateAppName(sensorId, appName);
       appNameForDatabase = appName;
+   }
+
+   @Override public boolean transferDataToDb() {
+      return dbTransfer;
+   }
+
+   @Override public void setDbTransfer(boolean transferToDb) {
+      DatabaseManager dbManager = SensorsSingleton.getDatabaseManager();
+      dbManager.internalSensorUpdateDbTransfer(sensorId, transferToDb);
+      dbTransfer = transferToDb;
    }
 
    @Override public void sendDataToSensor(Bundle data) {

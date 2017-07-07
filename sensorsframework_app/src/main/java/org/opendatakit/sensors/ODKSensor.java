@@ -28,36 +28,36 @@ import java.util.List;
  */
 public interface ODKSensor {
 
-	public abstract void connect()
+	public void connect()
 			throws SensorNotFoundException;
 
-	public abstract CommunicationChannelType getCommunicationChannelType();
+	public CommunicationChannelType getCommunicationChannelType();
 
-	public abstract void disconnect() throws SensorNotFoundException;
+	public void disconnect() throws SensorNotFoundException;
 
 	/**
 	 * Sends a message to the sensor to configure it.
 	 * @param setting TODO
 	 */
-	public abstract void configure(String setting, Bundle params)
+	public void configure(String setting, Bundle params)
 			throws ParameterMissingException;
 
-	public abstract List<Bundle> getSensorData(long maxNumReadings);
+	public List<Bundle> getSensorData(long maxNumReadings);
 
-	public abstract void sendDataToSensor(Bundle dataToEncode);
+	public void sendDataToSensor(Bundle dataToEncode);
 
-	public abstract boolean startSensor();
+	public boolean startSensor();
 
-	public abstract boolean stopSensor();
+	public boolean stopSensor();
 
-	public abstract String getSensorID();
+	public String getSensorID();
 
 	/**
 	 * Adds a new data sample packet for a sensor. 
 	 * @param packet
 	 *            sensor data packet
 	 */
-	public abstract void addSensorDataPacket(SensorDataPacket packet);
+	public void addSensorDataPacket(SensorDataPacket packet);
 
 	/**
 	 * Deletes any existing temporary buffers for a sensor. This should be
@@ -65,21 +65,25 @@ public interface ODKSensor {
 	 * previous data.
 	 * 
 	 */
-	public abstract void dataBufferReset();
+	public void dataBufferReset();
 
-	public abstract void shutdown() throws SensorNotFoundException;
+	public void shutdown() throws SensorNotFoundException;
 
-	public abstract String getReadingUiIntentStr();
+	public String getReadingUiIntentStr();
 
-	public abstract String getConfigUiIntentStr();
+	public String getConfigUiIntentStr();
 
-	public abstract boolean hasReadingUi();
+	public boolean hasReadingUi();
 
-	public abstract boolean hasConfigUi();
+	public boolean hasConfigUi();
 
-	 public abstract String getAppNameForDatabase();
+	 public String getAppNameForDatabase();
 
-	public abstract boolean hasAppNameForDatabase();
+	public boolean hasAppNameForDatabase();
 
-	 public abstract void setAppNameForDatabase(String appName);
+	 public void setAppNameForDatabase(String appName);
+
+	public boolean transferDataToDb();
+
+	public void setDbTransfer(boolean transferToDb);
 }

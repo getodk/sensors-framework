@@ -21,7 +21,7 @@ import org.opendatakit.sensors.bluetooth.BluetoothManager;
 import org.opendatakit.sensors.exception.CustomUncaughtExceptionHandler;
 import org.opendatakit.sensors.manager.DatabaseManager;
 import org.opendatakit.sensors.manager.ODKSensorManager;
-import org.opendatakit.sensors.tests.DummyManager;
+import org.opendatakit.sensors.dummy.DummyManager;
 import org.opendatakit.sensors.usb.USBManager;
 
 /**
@@ -29,6 +29,8 @@ import org.opendatakit.sensors.usb.USBManager;
  * @author rohitchaudhri@gmail.com
  */
 public class SensorsSingleton {
+
+   public static final boolean DEBUG = true;
 
    private static final String LOGTAG = SensorsSingleton.class.getSimpleName();
 
@@ -60,7 +62,9 @@ public class SensorsSingleton {
       // create communication managers
       bluetoothManager = new BluetoothManager(cxt);
       usbManager = new USBManager(cxt);
-      dummyManager = new DummyManager(cxt, dbManager);
+      if(DEBUG) {
+         dummyManager = new DummyManager(cxt, dbManager);
+      }
       Thread.setDefaultUncaughtExceptionHandler(new CustomUncaughtExceptionHandler());
 
       // create sensor manager
@@ -70,7 +74,9 @@ public class SensorsSingleton {
       // provide reference to the sensor manager
       bluetoothManager.setSensorManager(sensorManager);
       usbManager.setSensorManager(sensorManager);
-      dummyManager.setSensorManager(sensorManager);
+      if(DEBUG) {
+         dummyManager.setSensorManager(sensorManager);
+      }
 
       // try to connect to registered sensors
       sensorManager.initializeRegisteredSensors();
@@ -78,7 +84,9 @@ public class SensorsSingleton {
       // start communication managers
       bluetoothManager.initializeSensors();
       usbManager.initializeSensors();
-      dummyManager.initializeSensors();
+      if(DEBUG) {
+         dummyManager.initializeSensors();
+      }
 
       // UPDATE STATE AFTER CONSTRUCTION COMPLETES
       constructed = true;
