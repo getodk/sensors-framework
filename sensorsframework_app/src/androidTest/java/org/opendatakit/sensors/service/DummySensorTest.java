@@ -107,7 +107,7 @@ public class DummySensorTest {
 
    }
 
-   @Test public void testLightInternalSensorConnected() {
+/*   @Test public void testLightInternalSensorConnected() {
       ODKSensorService srv = boundService;
       assertNotNull(srv);
 
@@ -122,7 +122,7 @@ public class DummySensorTest {
       } catch (Exception e) {
          fail(EXCEPTION_MSG + e.getMessage());
       }
-   }
+   }*/
 
    @Test public void testDummyInternalSensorGetSingleDataPoint() {
 
