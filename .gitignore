@@ -4,3 +4,6 @@ build
 .idea
 local.properties
 *.iml
+sensorsframework_app/google-services.json
+sensorsframework_app/fabric.properties
+odkanalytics/
