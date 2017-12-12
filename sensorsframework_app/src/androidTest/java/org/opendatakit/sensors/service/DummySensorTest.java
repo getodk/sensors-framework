@@ -107,12 +107,12 @@ public class DummySensorTest {
 
    }
 
-   @Test public void testLightInternalSensorConnected() {
+   @Test public void testAccelerometerInternalSensorConnected() {
       ODKSensorService srv = boundService;
       assertNotNull(srv);
 
       try {
-         String id = BuiltInSensorType.LIGHT.name();
+         String id = BuiltInSensorType.ACCELEROMETER.name();
          assertTrue(srv.hasSensor(id));
          assertFalse(srv.isConnected(id));
 
