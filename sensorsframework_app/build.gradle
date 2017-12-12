@@ -28,19 +28,31 @@ android {
         testInstrumentationRunner(instrumentationRunner)
     }
 
+    flavorDimensions "stage", "testing"
+
     productFlavors {
         demo {
+            dimension 'stage'
         }
 
         master {
+            dimension 'stage'
         }
 
         snapshot {
+            dimension 'stage'
+        }
+
+        basic {
+            dimension 'testing'
         }
 
         uitest {
+            minSdkVersion(uitestMinSDK)
+            dimension 'testing'
         }
     }
+
 
     signingConfigs {
         release {
@@ -90,51 +102,45 @@ configurations.all {
 
 
 dependencies {
-    compile fileTree(include: '*.jar', dir: 'libs')
+    implementation fileTree(include: '*.jar', dir: 'libs')
 
     if (libraryProjectPath.exists() && gradle.useLocal) { // Local project is favoured
-        compile project(libraryProjectName)
+        implementation project(libraryProjectName)
     } else {
-        demoCompile(group: groupId, name: libraryDemoArtifactName, classifier: demoRelease,
+        demoImplementation(group: groupId, name: libraryDemoArtifactName, classifier: demoRelease,
                 version: latestVersion, ext: 'aar')
-        masterCompile(group: groupId, name: libraryMasterArtifactName, classifier: masterRelease,
+        masterImplementation(group: groupId, name: libraryMasterArtifactName, classifier: masterRelease,
                 version: masterArtifactVersion, ext: 'aar')
-        snapshotCompile(group: groupId, name: librarySnapshotArtifactName,
+        snapshotImplementation(group: groupId, name: librarySnapshotArtifactName,
                 classifier: snapshotRelease, version: latestVersion, ext: 'aar')
-        uitestCompile(group: groupId, name: librarySnapshotArtifactName,
-                      classifier: snapshotRelease, version: latestVersion, ext: 'aar')
     }
 
     if (commonProjectPath.exists() && gradle.useLocal) { // Local project is favoured
-        compile project(commonProjectName)
+        implementation project(commonProjectName)
     } else {
-        demoCompile(group: groupId, name: commonDemoArtifactName, classifier: demoRelease,
+        demoImplementation(group: groupId, name: commonDemoArtifactName, classifier: demoRelease,
                 version: latestVersion, ext: 'aar')
-        masterCompile(group: groupId, name: commonMasterArtifactName, classifier: masterRelease,
+        masterImplementation(group: groupId, name: commonMasterArtifactName, classifier: masterRelease,
                 version: masterArtifactVersion, ext: 'aar')
-        snapshotCompile(group: groupId, name: commonSnapshotArtifactName,
+        snapshotImplementation(group: groupId, name: commonSnapshotArtifactName,
                 classifier: snapshotRelease, version: latestVersion, ext: 'aar')
-        uitestCompile(group: groupId, name: commonSnapshotArtifactName,
-                      classifier: snapshotRelease, version: latestVersion, ext: 'aar')
     }
 
     if (sensorsInterfaceProjectPath.exists() && gradle.useLocal) { // Local project is favoured
-        compile project(sensorsInterfaceProjectName)
+        implementation project(sensorsInterfaceProjectName)
     } else {
-        demoCompile(group: groupId, name: sensorsInterfaceSnapshotArtifactName, classifier: snapshotRelease,
+        demoImplementation(group: groupId, name: sensorsInterfaceSnapshotArtifactName, classifier: snapshotRelease,
                 version: latestVersion, ext: 'aar')
-        masterCompile(group: groupId, name: sensorsInterfaceSnapshotArtifactName, classifier: snapshotRelease,
+        masterImplementation(group: groupId, name: sensorsInterfaceSnapshotArtifactName, classifier: snapshotRelease,
                 version: latestVersion, ext: 'aar')
-        snapshotCompile(group: groupId, name: sensorsInterfaceSnapshotArtifactName,
-                classifier: snapshotRelease, version: latestVersion, ext: 'aar')
-        uitestCompile(group: groupId, name: sensorsInterfaceSnapshotArtifactName,
+        snapshotImplementation(group: groupId, name: sensorsInterfaceSnapshotArtifactName,
                 classifier: snapshotRelease, version: latestVersion, ext: 'aar')
     }
 
     // Testing dependencies
-    testCompile 'junit:junit:4.12'
-    androidTestCompile 'com.android.support.test:runner:1.0.0'
-    androidTestCompile 'com.android.support.test:rules:1.0.0'
-	androidTestCompile 'junit:junit:4.12'
-    androidTestCompile 'com.android.support:support-annotations:25.4.0'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.0'
+    androidTestImplementation'com.android.support.test:rules:1.0.0'
+	androidTestImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support:support-annotations:25.4.0'
 }
