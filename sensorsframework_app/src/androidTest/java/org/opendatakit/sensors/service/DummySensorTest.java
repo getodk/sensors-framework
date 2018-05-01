@@ -204,6 +204,14 @@ public class DummySensorTest {
 
             srv.stopSensor(DUMMY_INTERNAL_ID);
 
+            // make sure thread is yielded a last time
+            try {
+               Thread.sleep(1);
+            } catch (InterruptedException e) {
+               // TODO Auto-generated catch block
+               e.printStackTrace();
+            }
+
             List<Bundle> dataPoints = srv.getSensorData(DUMMY_INTERNAL_ID, 0);
 
             System.err.println("Iteration: " + iteration + " Size: " + dataPoints.size());
