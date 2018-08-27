@@ -29,7 +29,12 @@ import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.ColumnList;
 import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.database.service.*;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.IDbInterface;
+import org.opendatakit.database.service.InternalUserDbInterface;
+import org.opendatakit.database.service.InternalUserDbInterfaceAidlWrapperImpl;
+import org.opendatakit.database.service.UserDbInterface;
+import org.opendatakit.database.service.UserDbInterfaceImpl;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.sensors.DataSeries;
@@ -121,7 +126,7 @@ public class WorkerThread extends Thread {
 
          try {
             InternalUserDbInterface internalUserDbInterface = new InternalUserDbInterfaceAidlWrapperImpl
-                (AidlDbInterface.Stub.asInterface(service));
+                (IDbInterface.Stub.asInterface(service));
             databaseService = new UserDbInterfaceImpl(internalUserDbInterface);
          } catch (IllegalArgumentException e) {
             databaseService = null;

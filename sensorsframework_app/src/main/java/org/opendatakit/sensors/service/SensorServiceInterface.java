@@ -33,7 +33,7 @@ import java.util.List;
  * @author wbrunette@gmail.com
  * @author rohitchaudhri@gmail.com
  */
-public class SensorServiceInterface extends ODKSensorService.Stub {
+public class SensorServiceInterface extends IODKSensorService.Stub {
 
    private static final String TAG = SensorServiceInterface.class.getSimpleName();
 
