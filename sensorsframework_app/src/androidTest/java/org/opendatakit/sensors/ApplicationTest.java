@@ -10,7 +10,7 @@ import android.util.Log;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.sensors.service.ODKSensorService;
+import org.opendatakit.sensors.service.IODKSensorService;
 
 import java.util.concurrent.TimeoutException;
 
@@ -25,13 +25,13 @@ public class ApplicationTest {
    @Rule
    public final ServiceTestRule mServiceRule = new ServiceTestRule();
 
-   private ODKSensorService bindToService() {
+   private IODKSensorService bindToService() {
       Context context = InstrumentationRegistry.getContext();
       Intent bind_intent = new Intent();
       bind_intent.setClassName(SensorsConsts.frameworkPackage, SensorsConsts.frameworkService);
 
       int count = 0;
-      ODKSensorService sensorService;
+      IODKSensorService sensorService;
       try {
          IBinder service = null;
          while ( service == null ) {
@@ -51,7 +51,7 @@ public class ApplicationTest {
                }
             }
          }
-         sensorService = ODKSensorService.Stub.asInterface(service);
+         sensorService = IODKSensorService.Stub.asInterface(service);
       } catch (IllegalArgumentException e) {
          sensorService = null;
       }
@@ -60,7 +60,7 @@ public class ApplicationTest {
 
    @Test
    public void testBinding() {
-      ODKSensorService serviceInterface = bindToService();
+      IODKSensorService serviceInterface = bindToService();
       assertNotNull( "bind did not succeed", serviceInterface);
    }
 }
