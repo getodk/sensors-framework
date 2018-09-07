@@ -18,7 +18,7 @@ package org.opendatakit.sensors;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opendatakit.sensors.drivers.ODKSensorDriver;
+import org.opendatakit.sensors.drivers.IODKSensorDriver;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -39,7 +39,7 @@ public class GenericDriverProxy implements ServiceConnection, DriverCommunicator
 
 	public static final String TAG = "GenericDriverProxy";
 	private Context componentContext;
-	private ODKSensorDriver sensorDriverProxy;
+	private IODKSensorDriver sensorDriverProxy;
 	private boolean isBoundToService;
 
 	public GenericDriverProxy(String packageName, String className,
@@ -72,7 +72,7 @@ public class GenericDriverProxy implements ServiceConnection, DriverCommunicator
 	@Override
 	public void onServiceConnected(ComponentName className, IBinder service) {
 		Log.d(TAG, "Bound to SensorDriver");
-		sensorDriverProxy = ODKSensorDriver.Stub.asInterface(service);
+		sensorDriverProxy = IODKSensorDriver.Stub.asInterface(service);
 		isBoundToService = true;
 	}
 

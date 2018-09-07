@@ -39,7 +39,7 @@ public class DummySensorTest {
 
    @Rule public final ODKServiceTestRule mServiceRule = new ODKServiceTestRule();
 
-   public ODKSensorService boundService;
+   public IODKSensorService boundService;
 
    @Before public void bindToSensorService() {
 
@@ -56,7 +56,7 @@ public class DummySensorTest {
       }
 
       try {
-         boundService = ODKSensorService.Stub.asInterface(srv);
+         boundService = IODKSensorService.Stub.asInterface(srv);
       } catch (IllegalArgumentException e) {
          boundService = null;
       }
@@ -75,12 +75,12 @@ public class DummySensorTest {
    }
 
    @Test public void testBinding() {
-      ODKSensorService serviceInterface = boundService;
+      IODKSensorService serviceInterface = boundService;
       assertNotNull(serviceInterface);
    }
 
    @Test public void testDummyBuiltInSensorExists() {
-      ODKSensorService srv = boundService;
+      IODKSensorService srv = boundService;
       assertNotNull(srv);
 
       try {
@@ -91,7 +91,7 @@ public class DummySensorTest {
    }
 
    @Test public void testDummyInternalSensorConnected() {
-      ODKSensorService srv = boundService;
+      IODKSensorService srv = boundService;
       assertNotNull(srv);
 
       try {
@@ -108,7 +108,7 @@ public class DummySensorTest {
    }
 
    @Test public void testAccelerometerInternalSensorConnected() {
-      ODKSensorService srv = boundService;
+      IODKSensorService srv = boundService;
       assertNotNull(srv);
 
       try {
@@ -126,7 +126,7 @@ public class DummySensorTest {
 
    @Test public void testDummyInternalSensorGetSingleDataPoint() {
 
-      ODKSensorService srv = boundService;
+      IODKSensorService srv = boundService;
       assertNotNull(srv);
 
       try {
@@ -165,7 +165,7 @@ public class DummySensorTest {
 
    @Test public void testDummyInternalSensorGetSingleDataPointVaryingDelaysInGeneration() {
 
-      ODKSensorService srv = boundService;
+      IODKSensorService srv = boundService;
       assertNotNull(srv);
 
       try {
