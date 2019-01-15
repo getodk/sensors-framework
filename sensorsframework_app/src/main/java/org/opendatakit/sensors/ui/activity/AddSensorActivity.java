@@ -15,15 +15,22 @@
  */
 package org.opendatakit.sensors.ui.activity;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 import org.opendatakit.sensors.Constants;
 import org.opendatakit.sensors.R;
 import org.opendatakit.sensors.SensorsSingleton;
 import org.opendatakit.sensors.ServiceConstants;
+import org.opendatakit.utilities.RuntimePermissionUtils;
 
 /**
  * @author wbrunette@gmail.com
@@ -33,6 +40,15 @@ public class AddSensorActivity extends Activity {
 
    private static final String LOGTAG = AddSensorActivity.class.getSimpleName();
 
+   protected static final String[] REQUIRED_PERMISSIONS = new String[] {
+       Manifest.permission.BLUETOOTH_ADMIN,
+       Manifest.permission.BLUETOOTH,
+       Manifest.permission.WRITE_EXTERNAL_STORAGE,
+       Manifest.permission.ACCESS_COARSE_LOCATION
+   };
+
+   protected static final int PERMISSION_REQ_CODE = 5;
+
    private static final int RESULT_OK_BT = 1;
    private static final int RESULT_OK_USB = 2;
 
@@ -40,6 +56,14 @@ public class AddSensorActivity extends Activity {
 
    @Override public void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
+
+      if (!RuntimePermissionUtils.checkSelfAllPermission(this, REQUIRED_PERMISSIONS)) {
+         ActivityCompat.requestPermissions(
+             this,
+             REQUIRED_PERMISSIONS,
+             PERMISSION_REQ_CODE
+         );
+      }
 
       Intent intent = getIntent();
       String tmpAppName = intent.getStringExtra(ServiceConstants.APP_NAME_KEY);
@@ -92,4 +116,39 @@ public class AddSensorActivity extends Activity {
       }
    }
 
+   @Override
+   public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+      super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+      if (requestCode != PERMISSION_REQ_CODE) {
+         return;
+      }
+
+      boolean granted = true;
+      if (grantResults.length > 0) {
+         for (int i = 0; i < grantResults.length; i++) {
+            if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+               granted = false;
+            }
+         }
+
+         if (granted)
+            return;
+
+         if (RuntimePermissionUtils.shouldShowAnyPermissionRationale(this, permissions)) {
+            RuntimePermissionUtils.createPermissionRationaleDialog(this, requestCode, permissions).setMessage(R.string.write_external_storage_rationale)
+                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                   @Override public void onClick(DialogInterface dialog, int which) {
+                      dialog.cancel();
+                      setResult(Activity.RESULT_CANCELED);
+                      finish();
+                   }
+                }).show();
+         } else {
+            Toast.makeText(this, R.string.write_external_perm_denied, Toast.LENGTH_LONG).show();
+            setResult(Activity.RESULT_CANCELED);
+            finish();
+         }
+      }
+   }
 }
