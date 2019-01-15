@@ -112,7 +112,7 @@ public class DatabaseManager {
             db.execSQL("CREATE TABLE " + InternalSensorTable.TABLE_NAME + " (" +
                 InternalSensorTable.ID + " TEXT PRIMARY KEY," +
                 InternalSensorTable.APP_NAME + " TEXT," +
-                ExternalSensorTable.DB_TRANSFER + " TEXT" + ");");
+                InternalSensorTable.DB_TRANSFER + " TEXT" + ");");
 
          } catch (SQLException e) {
             Log.w(LOGTAG, "DatabaseHelper onCreate Failed!");
@@ -615,7 +615,7 @@ public class DatabaseManager {
 
       // query columns
       String[] cols = { ExternalSensorTable.ID, ExternalSensorTable.NAME, ExternalSensorTable.TYPE,
-          ExternalSensorTable.STATE, ExternalSensorTable.APP_NAME };
+          ExternalSensorTable.STATE, ExternalSensorTable.APP_NAME, ExternalSensorTable.DB_TRANSFER };
       String[] args = { type.name() };
 
       // run query
