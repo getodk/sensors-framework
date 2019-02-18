@@ -6,7 +6,6 @@ User documentation (for an early standalone version of this software) is [here](
 
 It is part of the ODK 2.0 Android tools suite. User documentation for each ODK 2.0 release is [under here](https://opendatakit.org/use/2_0_tools/)
 
-The Google group for user questions is: [opendatakit@](https://groups.google.com/forum/#!forum/opendatakit)
 
 * ODK website: [https://opendatakit.org](https://opendatakit.org)
 * ODK forum: [https://forum.opendatakit.org](https://forum.opendatakit.org)
