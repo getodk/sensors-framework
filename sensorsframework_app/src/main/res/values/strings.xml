@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ODK Sensors</string>
+    <string name="app_name">ODK-X Sensors</string>
     <string name="empty"></string>
     <string name="StarterAppName">Sensor Service Starter</string>
     <string name="usbSensorSelection">Select a USB sensor</string>
@@ -20,7 +20,7 @@
     <string name="single_click_no_action">Single Click: No Action</string>
     <string name="not_a_sensor">NOT A SENSOR</string>
     <string name="select_sensor_type">Select Sensor Type</string>
-    <string name="write_external_storage_rationale">ODK Sensors Framework needs to access external
-        storage to store resources and interact with other ODK apps</string>
-    <string name="write_external_perm_denied">ODK Sensors Framework cannot function without write access to external storage</string>
+    <string name="write_external_storage_rationale">ODK-X Sensors Framework needs to access external
+        storage to store resources and interact with other ODK-X apps</string>
+    <string name="write_external_perm_denied">ODK-X Sensors Framework cannot function without write access to external storage</string>
 </resources>
