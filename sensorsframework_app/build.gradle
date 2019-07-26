@@ -105,6 +105,7 @@ dependencies {
     implementation fileTree(include: '*.jar', dir: 'libs')
     implementation 'androidx.appcompat:appcompat:1.0.2'
     implementation 'androidx.preference:preference:1.0.0'
+    implementation 'androidx.annotation:annotation:1.1.0'
 
     if (libraryProjectPath.exists() && gradle.useLocal) { // Local project is favoured
         implementation project(libraryProjectName)
