@@ -37,7 +37,7 @@ public class ODKSensorManager {
    private static final String LOGTAG = ODKSensorManager.class.getSimpleName();
    private DatabaseManager databaseManager;
 
-   private WorkerThread workerThread;
+  // private WorkerThread workerThread;
    private Context svcContext;
 
    private Map<String, ODKSensor> sensors;
@@ -63,8 +63,10 @@ public class ODKSensorManager {
       queryNupdateSensorDriverTypes();
 
       //XXX FIX THIS: This needs to move to the superclass. being done here because each f/w version has a different contenturi
-      workerThread = new WorkerThread(svcContext, this);
-      workerThread.start();
+
+      // TODO: restore the automove. to maintain compatibility with non-ODK-X tools removed automatically transferring data to ODK-X Services.
+     // workerThread = new WorkerThread(svcContext, this);
+     // workerThread.start();
 
    }
 
@@ -250,7 +252,7 @@ public class ODKSensorManager {
 
    public void shutdown() {
       shutdownAllSensors();
-      workerThread.stopthread();
+   //   workerThread.stopthread();
    }
 
    public boolean addSensor(String id, DriverType driver, String appName, boolean
