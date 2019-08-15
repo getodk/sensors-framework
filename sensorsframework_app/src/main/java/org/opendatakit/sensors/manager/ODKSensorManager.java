@@ -63,8 +63,10 @@ public class ODKSensorManager {
       queryNupdateSensorDriverTypes();
 
       //XXX FIX THIS: This needs to move to the superclass. being done here because each f/w version has a different contenturi
-      workerThread = new WorkerThread(svcContext, this);
-      workerThread.start();
+
+      // TODO: restore the automove. to maintain compatibility with non-ODK-X tools removed automatically transferring data to ODK-X Services.
+     // workerThread = new WorkerThread(svcContext, this);
+     // workerThread.start();
 
    }
 
