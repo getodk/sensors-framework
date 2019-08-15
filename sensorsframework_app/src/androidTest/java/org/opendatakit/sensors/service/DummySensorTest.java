@@ -1,19 +1,14 @@
 package org.opendatakit.sensors.service;
 
-import android.os.RemoteException;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ServiceTestRule;
-import android.support.test.runner.AndroidJUnit4;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Log;
+import android.os.RemoteException;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.opendatakit.sensors.SensorsConsts;
 import org.opendatakit.sensors.builtin.BuiltInSensorType;
 import org.opendatakit.sensors.dummy.DummySensorDataGenerator;
@@ -24,13 +19,11 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
-@RunWith(AndroidJUnit4.class)
 public class DummySensorTest {
 
    public static final String DUMMY_INTERNAL_ID = ODKDummyInternalSensor.INTERNAL_ID;
@@ -46,7 +39,6 @@ public class DummySensorTest {
       Intent bind_intent = new Intent();
       bind_intent.setClassName(SensorsConsts.frameworkPackage, SensorsConsts.frameworkService);
 
-      int count = 0;
       IBinder srv = null;
       try {
          srv = mServiceRule.bindService(bind_intent);
